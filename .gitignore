@@ -192,3 +192,112 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# =============================================================================
+# Prompter-specific files
+# =============================================================================
+
+# Prompter state files
+.prompter_state.json
+prompter_state.json
+*.prompter_state.json
+
+# Prompter log files
+prompter.log
+prompter*.log
+
+# Test configuration files (may contain sensitive data)
+test_config.toml
+*test*.toml
+
+# Temporary prompter files
+.prompter_temp/
+prompter_temp/
+
+# User-specific configuration files
+user_config.toml
+local_config.toml
+personal_*.toml
+
+# Backup files created during prompter execution
+*.backup
+*.bak
+*.orig
+
+# =============================================================================
+# Development and IDE specific
+# =============================================================================
+
+# VS Code settings (uncomment if you want to ignore)
+# .vscode/
+# But keep launch.json and tasks.json if they exist
+.vscode/settings.json
+.vscode/extensions.json
+
+# JetBrains IDEs (uncomment if you want to ignore)
+# .idea/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# =============================================================================
+# OS specific
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*

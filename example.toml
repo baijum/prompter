@@ -1,0 +1,66 @@
+# Example configuration file for the prompter tool
+# This demonstrates how to configure sequential prompts for code tidying tasks
+
+[settings]
+# How long to wait (in seconds) before verifying task completion
+check_interval = 3600  # 1 hour
+
+# Maximum number of retries for failed tasks
+max_retries = 3
+
+# Command to use for Claude Code (default: "claude")
+claude_command = "claude"
+
+# Working directory for all operations (optional, defaults to current directory)
+# working_directory = "/path/to/your/project"
+
+# Example task: Fix compiler warnings
+[[tasks]]
+name = "fix_compiler_warnings"
+prompt = "Please fix all compiler warnings in this codebase. Focus on actual issues, not just suppressing warnings."
+verify_command = "make"
+verify_success_code = 0
+on_success = "next"      # Options: "next", "stop", "repeat"
+on_failure = "retry"     # Options: "retry", "stop", "next"
+max_attempts = 5
+timeout = 7200           # 2 hours timeout for Claude execution
+
+# Example task: Update documentation
+[[tasks]]
+name = "update_documentation"
+prompt = "Update all code documentation and comments to reflect the current state of the code. Ensure all public APIs are properly documented."
+verify_command = "make docs"
+verify_success_code = 0
+on_success = "next"
+on_failure = "next"      # Continue even if this fails
+max_attempts = 3
+
+# Example task: Format code
+[[tasks]]
+name = "format_code"
+prompt = "Format all code in the project according to the established style guidelines. Run any available formatters."
+verify_command = "make lint"
+verify_success_code = 0
+on_success = "next"
+on_failure = "retry"
+max_attempts = 2
+
+# Example task: Update tests
+[[tasks]]
+name = "update_tests"
+prompt = "Review and update all tests to ensure they are comprehensive and reflect recent code changes. Add missing tests for new functionality."
+verify_command = "make test"
+verify_success_code = 0
+on_success = "stop"      # Stop after successful test updates
+on_failure = "stop"      # Stop if tests can't be fixed
+max_attempts = 3
+
+# Example task: Security audit
+[[tasks]]
+name = "security_audit"
+prompt = "Perform a security audit of the codebase. Look for potential vulnerabilities, insecure patterns, and recommend fixes."
+verify_command = "make security-check"
+verify_success_code = 0
+on_success = "next"
+on_failure = "next"      # Continue even if security check fails
+max_attempts = 2

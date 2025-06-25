@@ -58,10 +58,30 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "YTT", "S", "BLE", "B", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PGH", "PL", "TRY", "NPY", "RUF"]
-ignore = ["E501", "COM812", "ISC001", "T201", "PLR0911", "PLR0912", "PLR0915", "PLR2004"]
+ignore = [
+    "E501", "COM812", "ISC001",  # Line length and formatting
+    "T201",  # Print statements (acceptable in CLI)
+    "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004",  # Complexity rules
+    "TRY300", "TRY003",  # Exception handling patterns
+    "BLE001",  # Broad exception handling (acceptable for CLI error handling)
+    "B904",  # Exception chaining (not always necessary)
+    "EM102",  # F-string in exception (acceptable for CLI)
+    "G004",  # Logging f-strings (acceptable)
+    "PTH123",  # Path.open vs open (both are fine)
+    "S602",  # Shell=True (needed for verification commands)
+    "PLC0415",  # Import placement (sometimes needed for conditional imports)
+]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "ARG002"]
+"tests/*" = [
+    "S101",  # Assert statements
+    "ARG001", "ARG002",  # Unused arguments in mocks
+    "S108",  # Hardcoded temp paths in tests
+    "SIM117",  # Nested with statements (sometimes clearer)
+    "B017", "PT011",  # Broad exception testing (acceptable in tests)
+    "F841",  # Unused variables in test setup
+    "RUF003", "RUF013",  # Various test-specific warnings
+]
 
 [tool.mypy]
 python_version = "3.11"

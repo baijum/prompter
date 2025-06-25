@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-01-25
+
+### 🚀 Added
+
+- **Comprehensive example configurations** for real-world use cases
+  - Security audit workflow for identifying vulnerabilities
+  - Codebase refactoring workflow for modernization
+  - BDD workflow for test-driven development
+  - Detailed README with usage patterns and best practices
+  
+- **Advanced system prompt** (`PROMPTER_SYSTEM_PROMPT.md`)
+  - Comprehensive guidance for Claude Code interactions
+  - Built-in safety checks and verification patterns
+  - Task-specific strategies for different code operations
+  - Best practices for large-scale code transformations
+
+### 📚 Documentation
+
+- **Enhanced README** with quick start guide and resource links
+- **Example workflows** with detailed comments and explanations
+- **System prompt documentation** for advanced customization
+
+### 🔧 Improved
+
+- Better project documentation structure
+- More intuitive examples for common use cases
+- Enhanced configuration templates
+
 ## [0.3.0] - 2025-01-25
 
 ### 🚀 Added

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-01-25
+
+### 🐛 Fixed
+
+- **Removed deprecated `claude_command` configuration**
+  - The `claude_command` setting is no longer needed since the tool uses the Claude Code Python SDK directly
+  - Removed all references from configuration files, sample configs, and test files
+  - This cleanup improves clarity and prevents confusion about the SDK-based architecture
+
+### 🧹 Maintenance
+
+- Cleaned up legacy configuration options
+- Simplified configuration structure
+- All 107 tests continue to pass
+
 ## [0.2.0] - 2025-01-25
 
 ### 🚀 Added

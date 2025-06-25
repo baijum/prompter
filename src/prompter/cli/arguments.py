@@ -71,6 +71,13 @@ Examples:
     )
 
     parser.add_argument(
+        "--debug",
+        "-d",
+        action="store_true",
+        help="Enable extensive diagnostic logging (includes all debug messages)",
+    )
+
+    parser.add_argument(
         "--log-file",
         type=Path,
         help="Path to log file (optional)",

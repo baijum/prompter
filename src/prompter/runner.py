@@ -46,8 +46,14 @@ class TaskRunner:
     def run_task(self, task: TaskConfig) -> TaskResult:
         """Execute a single task."""
         self.logger.info(f"Starting task: {task.name}")
+        self.logger.debug(
+            f"Task configuration: name={task.name}, prompt={task.prompt[:100]}..., "
+            f"verify_command={task.verify_command}, max_attempts={task.max_attempts}, "
+            f"timeout={task.timeout}s, on_success={task.on_success}, on_failure={task.on_failure}"
+        )
 
         if self.dry_run:
+            self.logger.debug(f"Dry run mode enabled for task {task.name}")
             return self._dry_run_task(task)
 
         attempts = 0
@@ -58,8 +64,16 @@ class TaskRunner:
             )
 
             # Execute the prompt with Claude Code
+            self.logger.debug(f"Executing Claude prompt for task {task.name}")
+            claude_start_time = time.time()
             claude_result = self._execute_claude_prompt(task)
+            claude_duration = time.time() - claude_start_time
+            self.logger.debug(
+                f"Claude execution completed in {claude_duration:.2f}s, success={claude_result[0]}"
+            )
+
             if not claude_result[0]:
+                self.logger.debug(f"Claude execution failed: {claude_result[1]}")
                 if attempts >= task.max_attempts:
                     return TaskResult(
                         task.name,
@@ -71,12 +85,24 @@ class TaskRunner:
 
             # Wait for the check interval before verification
             if self.config.check_interval > 0:
+                self.logger.debug(
+                    f"Waiting {self.config.check_interval}s before verification"
+                )
                 time.sleep(self.config.check_interval)
 
             # Verify the task was successful
+            self.logger.debug(f"Running verification command: {task.verify_command}")
+            verify_start_time = time.time()
             verify_result = self._verify_task(task)
+            verify_duration = time.time() - verify_start_time
+            self.logger.debug(
+                f"Verification completed in {verify_duration:.2f}s, success={verify_result[0]}"
+            )
 
             if verify_result[0]:
+                self.logger.debug(
+                    f"Task {task.name} completed successfully on attempt {attempts}"
+                )
                 return TaskResult(
                     task.name,
                     success=True,
@@ -129,11 +155,20 @@ class TaskRunner:
     def _execute_claude_prompt(self, task: TaskConfig) -> tuple[bool, str]:
         """Execute a Claude Code prompt using SDK."""
         try:
+            self.logger.debug("Creating asyncio event loop for Claude SDK execution")
             # Run the async query in a synchronous context
-            return asyncio.run(self._execute_claude_prompt_async(task))
+            result = asyncio.run(self._execute_claude_prompt_async(task))
+            self.logger.debug(
+                f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
+            )
+            return result
         except TimeoutError:
+            self.logger.exception(
+                f"Claude SDK task timed out after {task.timeout} seconds"
+            )
             return False, f"Claude SDK task timed out after {task.timeout} seconds"
         except Exception as e:
+            self.logger.exception("Error executing Claude SDK task")
             return False, f"Error executing Claude SDK task: {e}"
 
     async def _execute_claude_prompt_async(self, task: TaskConfig) -> tuple[bool, str]:
@@ -184,6 +219,19 @@ class TaskRunner:
 
             success = result.returncode == task.verify_success_code
             output = f"Exit code: {result.returncode}\\nStdout: {result.stdout}\\nStderr: {result.stderr}"
+
+            self.logger.debug(
+                f"Verification command completed: exit_code={result.returncode}, "
+                f"expected={task.verify_success_code}, success={success}"
+            )
+            if result.stdout:
+                self.logger.debug(
+                    f"Verification stdout ({len(result.stdout)} chars): {result.stdout[:500]}..."
+                )
+            if result.stderr:
+                self.logger.debug(
+                    f"Verification stderr ({len(result.stderr)} chars): {result.stderr[:500]}..."
+                )
 
             return success, output
 

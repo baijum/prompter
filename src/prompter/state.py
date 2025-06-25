@@ -69,20 +69,33 @@ class StateManager:
     def _load_state(self) -> None:
         """Load state from file if it exists."""
         if self.state_file.exists():
+            self.logger.debug(f"Loading state from {self.state_file}")
             try:
                 with open(self.state_file) as f:
                     data = json.load(f)
+
+                self.logger.debug(
+                    f"State file loaded successfully, found {len(data.get('task_states', []))} task states"
+                )
 
                 # Load task states
                 for task_data in data.get("task_states", []):
                     state = TaskState.from_dict(task_data)
                     self.task_states[state.name] = state
+                    self.logger.debug(
+                        f"Loaded task state: {state.name} - status={state.status}, attempts={state.attempts}"
+                    )
 
                 # Load results history
                 self.results_history = data.get("results_history", [])
+                self.logger.debug(
+                    f"Loaded {len(self.results_history)} results from history"
+                )
 
             except (json.JSONDecodeError, KeyError) as e:
                 self.logger.warning(f"Could not load state file: {e}")
+        else:
+            self.logger.debug(f"No existing state file found at {self.state_file}")
 
     def save_state(self) -> None:
         """Save current state to file."""
@@ -94,22 +107,32 @@ class StateManager:
             "results_history": self.results_history,
         }
 
+        self.logger.debug(
+            f"Saving state to {self.state_file}: {len(self.task_states)} tasks, {len(self.results_history)} results"
+        )
+
         try:
             with open(self.state_file, "w") as f:
                 json.dump(data, f, indent=2)
+            self.logger.debug(f"State saved successfully to {self.state_file}")
         except OSError as e:
             self.logger.warning(f"Could not save state file: {e}")
 
     def get_task_state(self, task_name: str) -> TaskState:
         """Get state for a task, creating if it doesn't exist."""
         if task_name not in self.task_states:
+            self.logger.debug(f"Creating new task state for {task_name}")
             self.task_states[task_name] = TaskState(task_name)
         return self.task_states[task_name]
 
     def update_task_state(self, result: TaskResult) -> None:
         """Update task state based on execution result."""
+        self.logger.debug(
+            f"Updating task state for {result.task_name}: success={result.success}, attempts={result.attempts}"
+        )
         state = self.get_task_state(result.task_name)
 
+        old_status = state.status
         state.attempts = result.attempts
         state.last_attempt = result.timestamp
 
@@ -117,9 +140,15 @@ class StateManager:
             state.status = "completed"
             state.last_success = result.timestamp
             state.error_message = ""
+            self.logger.debug(
+                f"Task {result.task_name} status changed: {old_status} -> completed"
+            )
         else:
             state.status = "failed"
             state.error_message = result.error
+            self.logger.debug(
+                f"Task {result.task_name} status changed: {old_status} -> failed, error: {result.error[:100]}..."
+            )
 
         # Add to results history
         self.results_history.append(
@@ -142,7 +171,9 @@ class StateManager:
     def mark_task_running(self, task_name: str) -> None:
         """Mark a task as currently running."""
         state = self.get_task_state(task_name)
+        old_status = state.status
         state.status = "running"
+        self.logger.debug(f"Task {task_name} status changed: {old_status} -> running")
         self.save_state()
 
     def get_summary(self) -> dict[str, Any]:
@@ -173,10 +204,15 @@ class StateManager:
 
     def clear_state(self) -> None:
         """Clear all state (useful for fresh starts)."""
+        self.logger.debug(
+            f"Clearing all state: {len(self.task_states)} tasks, {len(self.results_history)} results"
+        )
         self.task_states.clear()
         self.results_history.clear()
         if self.state_file.exists():
+            self.logger.debug(f"Deleting state file: {self.state_file}")
             self.state_file.unlink()
+        self.logger.debug("State cleared successfully")
 
     def get_failed_tasks(self) -> list[str]:
         """Get list of task names that have failed."""

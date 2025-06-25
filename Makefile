@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration coverage coverage-html lint type-check format clean
+.PHONY: help install install-dev test test-unit test-integration coverage coverage-html lint type-check format format-check clean
 
 help:  ## Show this help message
 	@echo "Usage: make [target]"
@@ -41,6 +41,9 @@ type-check:  ## Run type checking
 format:  ## Format code
 	ruff format .
 
+format-check:  ## Check code formatting
+	ruff format --check .
+
 clean:  ## Clean build artifacts and coverage reports
 	rm -rf build/
 	rm -rf dist/
@@ -51,4 +54,4 @@ clean:  ## Clean build artifacts and coverage reports
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 
-all: lint type-check test coverage  ## Run all checks and tests
+all: lint format-check type-check test coverage  ## Run all checks and tests

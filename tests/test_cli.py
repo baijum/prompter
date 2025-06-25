@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from prompter.cli import create_parser, main, print_status
+from prompter.cli import create_parser, generate_sample_config, main, print_status
 from prompter.state import StateManager
 
 
@@ -67,6 +67,22 @@ class TestCreateParser:
         assert args.clear_state is True
         assert args.config is None
 
+    def test_parser_init_default(self):
+        """Test parser with init flag using default filename."""
+        parser = create_parser()
+
+        args = parser.parse_args(["--init"])
+        assert args.init == "prompter.toml"  # Default value
+        assert args.config is None
+
+    def test_parser_init_custom_filename(self):
+        """Test parser with init flag using custom filename."""
+        parser = create_parser()
+
+        args = parser.parse_args(["--init", "my-config.toml"])
+        assert args.init == "my-config.toml"
+        assert args.config is None
+
 
 class TestPrintStatus:
     """Tests for the print_status function."""
@@ -120,7 +136,7 @@ class TestPrintStatus:
 class TestMainFunction:
     """Tests for the main CLI function."""
 
-    @patch("prompter.cli.StateManager")
+    @patch("prompter.cli.main.StateManager")
     def test_main_status_command(self, mock_state_manager_class, capsys):
         """Test main function with status command."""
         mock_manager = Mock()
@@ -142,7 +158,7 @@ class TestMainFunction:
         captured = capsys.readouterr()
         assert "Session ID: 123" in captured.out
 
-    @patch("prompter.cli.StateManager")
+    @patch("prompter.cli.main.StateManager")
     def test_main_clear_state_command(self, mock_state_manager_class, capsys):
         """Test main function with clear-state command."""
         mock_manager = Mock()
@@ -164,8 +180,8 @@ class TestMainFunction:
 
         assert exc_info.value.code == 2  # argparse error exit code
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
     def test_main_config_file_not_found(
         self, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -180,8 +196,8 @@ class TestMainFunction:
         captured = capsys.readouterr()
         assert "Configuration file not found" in captured.err
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
     def test_main_config_validation_errors(
         self, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -202,9 +218,9 @@ class TestMainFunction:
         assert "Error 1" in captured.err
         assert "Error 2" in captured.err
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
-    @patch("prompter.cli.TaskRunner")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
+    @patch("prompter.cli.main.TaskRunner")
     def test_main_successful_execution(
         self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -243,9 +259,9 @@ class TestMainFunction:
         mock_runner.run_task.assert_called_once()
         mock_state_manager.update_task_state.assert_called_once()
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
-    @patch("prompter.cli.TaskRunner")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
+    @patch("prompter.cli.main.TaskRunner")
     def test_main_task_failure(
         self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -311,6 +327,7 @@ verify_command = "make check"
                 mock_args.task = "nonexistent_task"
                 mock_args.status = False
                 mock_args.clear_state = False
+                mock_args.init = None
                 mock_args.verbose = False
                 mock_args.state_file = None
                 mock_args.log_file = None
@@ -324,9 +341,9 @@ verify_command = "make check"
         captured = capsys.readouterr()
         assert "Task 'nonexistent_task' not found" in captured.err
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
-    @patch("prompter.cli.TaskRunner")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
+    @patch("prompter.cli.main.TaskRunner")
     def test_main_dry_run_mode(
         self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -372,8 +389,8 @@ verify_command = "make check"
     # Note: test_main_no_tasks_to_run removed due to complex mocking requirements
     # The "No tasks to run" scenario is better tested at the unit level
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
     def test_main_exception_handling(
         self, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -389,8 +406,8 @@ verify_command = "make check"
         captured = capsys.readouterr()
         assert "Error: Test exception" in captured.err
 
-    @patch("prompter.cli.StateManager")
-    @patch("prompter.cli.PrompterConfig")
+    @patch("prompter.cli.main.StateManager")
+    @patch("prompter.cli.main.PrompterConfig")
     def test_main_exception_handling_verbose(
         self, mock_config_class, mock_state_manager_class, capsys
     ):
@@ -407,8 +424,8 @@ verify_command = "make check"
         assert "Error: Test exception" in captured.err
         # In verbose mode, should also show traceback (but we won't test the exact content)
 
-    @patch("prompter.cli.setup_logging")
-    @patch("prompter.cli.StateManager")
+    @patch("prompter.cli.main.setup_logging")
+    @patch("prompter.cli.main.StateManager")
     def test_main_logging_setup(self, mock_state_manager_class, mock_setup_logging):
         """Test that logging is properly set up."""
         mock_manager = Mock()
@@ -431,8 +448,8 @@ verify_command = "make check"
         assert call_args[1]["level"] == "INFO"
         assert call_args[1]["verbose"] is False
 
-    @patch("prompter.cli.setup_logging")
-    @patch("prompter.cli.StateManager")
+    @patch("prompter.cli.main.setup_logging")
+    @patch("prompter.cli.main.StateManager")
     def test_main_logging_setup_verbose(
         self, mock_state_manager_class, mock_setup_logging
     ):
@@ -456,3 +473,71 @@ verify_command = "make check"
         call_args = mock_setup_logging.call_args
         assert call_args[1]["level"] == "DEBUG"
         assert call_args[1]["verbose"] is True
+
+
+class TestGenerateSampleConfig:
+    """Tests for the generate_sample_config function."""
+
+    def test_generate_sample_config_creates_file(self, tmp_path):
+        """Test that generate_sample_config creates a valid configuration file."""
+        config_file = tmp_path / "test-config.toml"
+
+        generate_sample_config(str(config_file))
+
+        assert config_file.exists()
+        content = config_file.read_text()
+
+        # Check that the file contains expected sections
+        assert "[settings]" in content
+        assert "[[tasks]]" in content
+        assert "fix_compiler_errors" in content
+        assert "format_code" in content
+        assert "update_documentation" in content
+
+        # Check that it contains helpful comments
+        assert "# Prompter Configuration File" in content
+        assert "# Replace with your build command" in content
+        assert "# Common verify_command examples:" in content
+
+    def test_generate_sample_config_overwrite_protection(self, tmp_path, monkeypatch):
+        """Test that generate_sample_config asks before overwriting existing files."""
+        config_file = tmp_path / "existing-config.toml"
+        config_file.write_text("existing content")
+
+        # Mock input to decline overwrite
+        inputs = iter(["n"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+
+        generate_sample_config(str(config_file))
+
+        # File should still contain original content
+        assert config_file.read_text() == "existing content"
+
+    def test_generate_sample_config_overwrite_accepted(self, tmp_path, monkeypatch):
+        """Test that generate_sample_config overwrites when user confirms."""
+        config_file = tmp_path / "existing-config.toml"
+        config_file.write_text("existing content")
+
+        # Mock input to accept overwrite
+        inputs = iter(["y"])
+        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+
+        generate_sample_config(str(config_file))
+
+        # File should contain new content
+        content = config_file.read_text()
+        assert "existing content" not in content
+        assert "[settings]" in content
+
+    def test_main_with_init_flag(self, tmp_path):
+        """Test main function with --init flag."""
+        config_file = tmp_path / "init-test.toml"
+
+        with patch.object(sys, "argv", ["prompter", "--init", str(config_file)]):
+            result = main()
+
+        assert result == 0
+        assert config_file.exists()
+        content = config_file.read_text()
+        assert "[settings]" in content
+        assert "[[tasks]]" in content

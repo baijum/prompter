@@ -20,7 +20,6 @@ class TestEndToEndIntegration:
         config_content = """[settings]
 check_interval = 0
 max_retries = 2
-claude_command = "echo"
 
 [[tasks]]
 name = "simple_task"

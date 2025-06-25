@@ -19,8 +19,6 @@ check_interval = 3600  # 1 hour
 # Maximum number of retries for failed tasks (can be overridden per task)
 max_retries = 3
 
-# Command to use for Claude Code (typically just "claude")
-claude_command = "claude"
 
 # Working directory for all operations (optional, defaults to current directory)
 # working_directory = "/path/to/your/project"

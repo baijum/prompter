@@ -119,7 +119,6 @@ def create_mock_config(tasks: list = None, **settings) -> Mock:
     # Default settings
     config.check_interval = settings.get("check_interval", 0)
     config.max_retries = settings.get("max_retries", 3)
-    config.claude_command = settings.get("claude_command", "claude")
     config.working_directory = settings.get("working_directory")
 
     # Default tasks

@@ -21,7 +21,6 @@ def sample_config() -> dict[str, Any]:
         "settings": {
             "check_interval": 3600,
             "max_retries": 3,
-            "claude_command": "claude",
         },
         "tasks": [
             {
@@ -53,7 +52,6 @@ def sample_toml_config(temp_dir, sample_config) -> Path:
     config_content = """[settings]
 check_interval = 3600
 max_retries = 3
-claude_command = "claude"
 
 [[tasks]]
 name = "test_task_1"

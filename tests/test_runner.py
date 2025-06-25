@@ -52,7 +52,6 @@ class TestTaskRunner:
         """Create a mock configuration."""
         config = Mock(spec=PrompterConfig)
         config.check_interval = 0  # No delay for tests
-        config.claude_command = "claude"
         config.working_directory = None
         return config
 
@@ -305,7 +304,6 @@ class TestTaskRunner:
         # Create config with multiple tasks
         config = Mock(spec=PrompterConfig)
         config.check_interval = 0
-        config.claude_command = "claude"
         config.working_directory = None
         config.tasks = [
             TaskConfig(
@@ -365,7 +363,6 @@ class TestTaskRunner:
         """Test running all tasks with stop on failure."""
         config = Mock(spec=PrompterConfig)
         config.check_interval = 0
-        config.claude_command = "claude"
         config.working_directory = None
         config.tasks = [
             TaskConfig(

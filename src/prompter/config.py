@@ -33,8 +33,6 @@ class PrompterConfig:
         settings = self._config.get("settings", {})
         self.check_interval: int = settings.get("check_interval", 3600)
         self.max_retries: int = settings.get("max_retries", 3)
-        # Note: claude_command is deprecated when using SDK but kept for backward compatibility
-        self.claude_command: str = settings.get("claude_command", "claude")
         self.working_directory: str | None = settings.get("working_directory")
 
         # Parse tasks

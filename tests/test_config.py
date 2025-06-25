@@ -71,7 +71,6 @@ class TestPrompterConfig:
         # Check settings
         assert config.check_interval == 3600
         assert config.max_retries == 3
-        assert config.claude_command == "claude"
         assert config.working_directory is None
 
         # Check tasks
@@ -110,7 +109,6 @@ verify_command = "echo ok"
         # Check defaults
         assert config.check_interval == 3600
         assert config.max_retries == 3
-        assert config.claude_command == "claude"
         assert config.working_directory is None
 
         # Check task

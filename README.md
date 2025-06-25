@@ -1,6 +1,10 @@
 # Prompter
 
-Run prompts sequentially to tidy large code bases using Claude Code SDK.
+A Python tool for running prompts sequentially to tidy large code bases using Claude Code SDK.
+
+[![PyPI version](https://badge.fury.io/py/claude-code-prompter.svg)](https://badge.fury.io/py/claude-code-prompter)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Requirements
 
@@ -8,6 +12,14 @@ Run prompts sequentially to tidy large code bases using Claude Code SDK.
 - Claude Code SDK
 
 ## Installation
+
+Install from PyPI:
+
+```bash
+pip install claude-code-prompter
+```
+
+Or install from source:
 
 ```bash
 # Install the package

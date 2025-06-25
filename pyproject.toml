@@ -3,13 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prompter"
+name = "claude-code-prompter"
 version = "0.1.0"
-description = "Run prompts sequentially to tidy large code base using Claude Code"
+description = "Run prompts sequentially to tidy large code bases using Claude Code"
 authors = [{name = "Baiju Muthukadan"}]
 license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.11"
+keywords = ["claude-code", "automation", "code-tidying", "development-tools"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -17,10 +18,19 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
 ]
 dependencies = [
     "claude-code-sdk>=0.0.11",
 ]
+
+[project.urls]
+homepage = "https://github.com/baijum/prompter"
+repository = "https://github.com/baijum/prompter"
+documentation = "https://github.com/baijum/prompter"
 
 [project.optional-dependencies]
 dev = [

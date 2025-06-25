@@ -29,11 +29,37 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
+## Quick Start
+
+1. **Generate a sample configuration** to get started quickly:
+   ```bash
+   prompter --init
+   ```
+
+2. **Customize the configuration** file (`prompter.toml`) for your project:
+   - Replace `make` commands with your project's build/test commands
+   - Adjust prompts to match your coding standards
+   - Modify task flow and retry settings
+
+3. **Test your configuration** with a dry run:
+   ```bash
+   prompter prompter.toml --dry-run
+   ```
+
+4. **Run the tasks** when ready:
+   ```bash
+   prompter prompter.toml
+   ```
+
 ## Usage
 
 ### Basic Commands
 
 ```bash
+# Generate a sample configuration file to get started
+prompter --init                     # Creates prompter.toml
+prompter --init my-config.toml      # Creates custom-named config
+
 # Run all tasks from a configuration file
 prompter config.toml
 

@@ -301,3 +301,6 @@ $RECYCLE.BIN/
 .directory
 .Trash-*
 .nfs*
+
+# Others
+claude-code-sdk-python/

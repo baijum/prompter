@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-01-25
+
+### 🚀 Added
+
+- **Extensive diagnostic logging with `--debug` flag**
+  - New `-d/--debug` flag enables comprehensive diagnostic logging throughout the codebase
+  - Extended log formatter shows timestamps with milliseconds, process/thread IDs, file locations, and function names
+  - Detailed logging for Claude SDK interactions including execution timing and message processing
+  - State transition logging for tracking task progress and file operations
+  - Configuration parsing and validation logging with detailed error information
+  - Execution flow tracking in main CLI for better debugging
+  - Support for saving logs to file with `--log-file` option
+  - Helps diagnose complex issues like TaskGroup errors by providing detailed diagnostic information
+
+### 🔧 Improved
+
+- **Enhanced logging infrastructure**
+  - Debug mode automatically enables debug logging for Claude SDK operations
+  - Proper use of `logger.exception()` for better error tracking
+  - Contextual logging throughout all major components
+  - Performance timing for Claude SDK and verification command execution
+
+### 🧹 Maintenance
+
+- Updated all logging calls to follow best practices
+- Fixed linting issues related to logging
+- All 107 tests continue to pass with 90.77% code coverage
+
 ## [0.2.1] - 2025-01-25
 
 ### 🐛 Fixed

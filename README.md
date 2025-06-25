@@ -78,8 +78,14 @@ prompter --clear-state
 # Enable verbose output for debugging
 prompter config.toml --verbose
 
+# Enable extensive diagnostic logging (new in v0.3.0)
+prompter config.toml --debug
+
 # Save logs to a file
 prompter config.toml --log-file debug.log
+
+# Combine debug mode with log file for comprehensive diagnostics
+prompter config.toml --debug --log-file debug.log
 ```
 
 ### Common Use Cases

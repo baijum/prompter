@@ -2,7 +2,8 @@
 
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
 import pytest
 
 
@@ -49,11 +50,7 @@ def sample_config() -> Dict[str, Any]:
 @pytest.fixture
 def sample_toml_config(temp_dir, sample_config) -> Path:
     """Create a sample TOML configuration file."""
-    import sys
-    if sys.version_info >= (3, 11):
-        import tomllib
-        # For writing, we need tomli-w or construct manually
-        config_content = '''[settings]
+    config_content = """[settings]
 check_interval = 3600
 max_retries = 3
 claude_command = "claude"
@@ -76,34 +73,8 @@ on_success = "stop"
 on_failure = "next"
 max_attempts = 2
 timeout = 600
-'''
-    else:
-        import tomli
-        config_content = '''[settings]
-check_interval = 3600
-max_retries = 3
-claude_command = "claude"
+"""
 
-[[tasks]]
-name = "test_task_1"
-prompt = "Fix all warnings"
-verify_command = "make"
-verify_success_code = 0
-on_success = "next"
-on_failure = "retry"
-max_attempts = 3
-
-[[tasks]]
-name = "test_task_2"
-prompt = "Update documentation"
-verify_command = "make docs"
-verify_success_code = 0
-on_success = "stop"
-on_failure = "next"
-max_attempts = 2
-timeout = 600
-'''
-    
     config_file = temp_dir / "config.toml"
     config_file.write_text(config_content)
     return config_file
@@ -112,13 +83,13 @@ timeout = 600
 @pytest.fixture
 def invalid_toml_config(temp_dir) -> Path:
     """Create an invalid TOML configuration file."""
-    config_content = '''[settings]
+    config_content = """[settings]
 check_interval = 3600
 
 [[tasks]]
 # Missing required fields
 name = "incomplete_task"
-'''
+"""
     config_file = temp_dir / "invalid_config.toml"
     config_file.write_text(config_content)
     return config_file

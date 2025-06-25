@@ -8,15 +8,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Development Environment Setup
 
-Since this is a new Python project without dependencies defined yet, you'll need to:
+This project requires Python 3.11 or higher.
 
 1. Set up a Python virtual environment:
    ```bash
-   python -m venv venv
+   python3.11 -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-2. Install dependencies once a requirements.txt or pyproject.toml is created
+2. Install the package with development dependencies:
+   ```bash
+   pip install -e ".[dev]"
+   ```
 
 ## Common Development Tasks
 
@@ -81,6 +84,34 @@ pytest -m "not integration"
 - `tests/test_integration.py` - End-to-end integration tests
 - `tests/test_helpers.py` - Test utilities and builder patterns
 
+### Test Coverage
+
+The project has comprehensive test coverage infrastructure:
+
+```bash
+# Run tests with coverage report
+make coverage
+
+# Generate and open HTML coverage report
+make coverage-html
+
+# Show coverage report with missing lines
+make coverage-report
+
+# Run with pytest directly
+pytest --cov=src/prompter --cov-report=term-missing
+
+# Run with multiple output formats
+pytest --cov=src/prompter --cov-report=term --cov-report=html --cov-report=xml
+```
+
+Coverage configuration is in:
+- `pyproject.toml` - Main coverage settings
+- `.coveragerc` - Additional coverage configuration
+- `tox.ini` - Multi-version testing configuration
+
+The CI pipeline automatically generates coverage reports and can upload to Codecov.
+
 ### Linting and Code Quality
 
 ```bash
@@ -91,11 +122,11 @@ mypy src/
 
 ## Architecture Notes
 
-The project automates code tidying tasks through:
+The project automates code tidying tasks through Claude Code SDK (Python):
 
 ### Core Components
 - **Configuration Parser** (`src/prompter/config.py`): Handles TOML configuration parsing and validation
-- **Task Runner** (`src/prompter/runner.py`): Executes Claude Code commands and verifies results
+- **Task Runner** (`src/prompter/runner.py`): Executes Claude Code tasks via SDK and verifies results
 - **State Manager** (`src/prompter/state.py`): Tracks task progress and persists state between runs
 - **CLI Interface** (`src/prompter/cli.py`): Command-line interface with comprehensive options
 

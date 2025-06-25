@@ -1,21 +1,19 @@
 """Test helper utilities and fixtures."""
 
-import tempfile
-import time
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 from unittest.mock import Mock
 
 import pytest
 
-from prompter.config import TaskConfig, PrompterConfig
+from prompter.config import PrompterConfig, TaskConfig
 from prompter.runner import TaskResult
 from prompter.state import TaskState
 
 
 class MockSubprocessResult:
     """Mock object for subprocess.run results."""
-    
+
     def __init__(self, returncode: int = 0, stdout: str = "", stderr: str = ""):
         self.returncode = returncode
         self.stdout = stdout
@@ -24,53 +22,53 @@ class MockSubprocessResult:
 
 class TaskConfigBuilder:
     """Builder pattern for creating TaskConfig objects in tests."""
-    
+
     def __init__(self):
         self._config = {
             "name": "test_task",
             "prompt": "Test prompt",
             "verify_command": "echo ok",
         }
-    
+
     def name(self, name: str) -> "TaskConfigBuilder":
         self._config["name"] = name
         return self
-    
+
     def prompt(self, prompt: str) -> "TaskConfigBuilder":
         self._config["prompt"] = prompt
         return self
-    
+
     def verify_command(self, command: str) -> "TaskConfigBuilder":
         self._config["verify_command"] = command
         return self
-    
+
     def verify_success_code(self, code: int) -> "TaskConfigBuilder":
         self._config["verify_success_code"] = code
         return self
-    
+
     def on_success(self, action: str) -> "TaskConfigBuilder":
         self._config["on_success"] = action
         return self
-    
+
     def on_failure(self, action: str) -> "TaskConfigBuilder":
         self._config["on_failure"] = action
         return self
-    
+
     def max_attempts(self, attempts: int) -> "TaskConfigBuilder":
         self._config["max_attempts"] = attempts
         return self
-    
+
     def timeout(self, timeout: int) -> "TaskConfigBuilder":
         self._config["timeout"] = timeout
         return self
-    
+
     def build(self) -> TaskConfig:
         return TaskConfig(self._config)
 
 
 class TaskResultBuilder:
     """Builder pattern for creating TaskResult objects in tests."""
-    
+
     def __init__(self):
         self._task_name = "test_task"
         self._success = True
@@ -78,31 +76,31 @@ class TaskResultBuilder:
         self._error = ""
         self._verification_output = ""
         self._attempts = 1
-    
+
     def task_name(self, name: str) -> "TaskResultBuilder":
         self._task_name = name
         return self
-    
+
     def success(self, success: bool) -> "TaskResultBuilder":
         self._success = success
         return self
-    
+
     def output(self, output: str) -> "TaskResultBuilder":
         self._output = output
         return self
-    
+
     def error(self, error: str) -> "TaskResultBuilder":
         self._error = error
         return self
-    
+
     def verification_output(self, output: str) -> "TaskResultBuilder":
         self._verification_output = output
         return self
-    
+
     def attempts(self, attempts: int) -> "TaskResultBuilder":
         self._attempts = attempts
         return self
-    
+
     def build(self) -> TaskResult:
         return TaskResult(
             task_name=self._task_name,
@@ -117,26 +115,26 @@ class TaskResultBuilder:
 def create_mock_config(tasks: list = None, **settings) -> Mock:
     """Create a mock PrompterConfig object."""
     config = Mock(spec=PrompterConfig)
-    
+
     # Default settings
     config.check_interval = settings.get("check_interval", 0)
     config.max_retries = settings.get("max_retries", 3)
     config.claude_command = settings.get("claude_command", "claude")
-    config.working_directory = settings.get("working_directory", None)
-    
+    config.working_directory = settings.get("working_directory")
+
     # Default tasks
     if tasks is None:
         tasks = [
             TaskConfigBuilder().name("default_task").build()
         ]
     config.tasks = tasks
-    
+
     # Mock methods
     config.validate.return_value = []
     config.get_task_by_name.side_effect = lambda name: next(
         (task for task in config.tasks if task.name == name), None
     )
-    
+
     return config
 
 
@@ -251,15 +249,15 @@ def failed_task_result():
 
 class TestTaskConfigBuilder:
     """Tests for the TaskConfigBuilder helper."""
-    
+
     def test_builder_default_values(self):
         """Test builder creates config with default values."""
         config = TaskConfigBuilder().build()
-        
+
         assert config.name == "test_task"
         assert config.prompt == "Test prompt"
         assert config.verify_command == "echo ok"
-    
+
     def test_builder_custom_values(self):
         """Test builder with custom values."""
         config = (TaskConfigBuilder()
@@ -268,12 +266,12 @@ class TestTaskConfigBuilder:
                   .verify_command("custom command")
                   .max_attempts(5)
                   .build())
-        
+
         assert config.name == "custom_task"
         assert config.prompt == "Custom prompt"
         assert config.verify_command == "custom command"
         assert config.max_attempts == 5
-    
+
     def test_builder_chaining(self):
         """Test that builder methods can be chained."""
         config = (TaskConfigBuilder()
@@ -283,7 +281,7 @@ class TestTaskConfigBuilder:
                   .on_failure("retry")
                   .timeout(600)
                   .build())
-        
+
         assert config.name == "chained"
         assert config.on_success == "stop"
         assert config.on_failure == "retry"
@@ -292,15 +290,15 @@ class TestTaskConfigBuilder:
 
 class TestTaskResultBuilder:
     """Tests for the TaskResultBuilder helper."""
-    
+
     def test_result_builder_defaults(self):
         """Test result builder with default values."""
         result = TaskResultBuilder().build()
-        
+
         assert result.task_name == "test_task"
         assert result.success is True
         assert result.attempts == 1
-    
+
     def test_result_builder_custom_values(self):
         """Test result builder with custom values."""
         result = (TaskResultBuilder()
@@ -309,7 +307,7 @@ class TestTaskResultBuilder:
                   .error("Custom error")
                   .attempts(3)
                   .build())
-        
+
         assert result.task_name == "custom_result"
         assert result.success is False
         assert result.error == "Custom error"
@@ -318,25 +316,25 @@ class TestTaskResultBuilder:
 
 class TestAssertionHelpers:
     """Tests for assertion helper functions."""
-    
+
     def test_assert_task_result_matches(self):
         """Test task result assertion helper."""
         result = TaskResultBuilder().task_name("test").success(True).build()
-        
+
         # Should not raise
         assert_task_result_matches(result, {"task_name": "test", "success": True})
-        
+
         # Should raise
         with pytest.raises(AssertionError):
             assert_task_result_matches(result, {"task_name": "wrong"})
-    
+
     def test_assert_task_state_matches(self):
         """Test task state assertion helper."""
         state = TaskState("test", "completed", attempts=2)
-        
+
         # Should not raise
         assert_task_state_matches(state, {"name": "test", "status": "completed"})
-        
+
         # Should raise
         with pytest.raises(AssertionError):
             assert_task_state_matches(state, {"status": "failed"})

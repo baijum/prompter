@@ -1,0 +1,21 @@
+[run]
+branch = True
+source = src/prompter
+omit = 
+    */tests/*
+    */__init__.py
+    */site-packages/*
+
+[report]
+precision = 2
+show_missing = True
+skip_covered = False
+sort = Cover
+
+[html]
+directory = htmlcov
+title = Prompter Coverage Report
+skip_empty = True
+
+[xml]
+output = coverage.xml

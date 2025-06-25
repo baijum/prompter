@@ -265,7 +265,7 @@ timeout = 300
 
 The project includes ready-to-use workflow templates in the `examples/` directory:
 
-- **bdd-workflow.toml**: Automated BDD scenario implementation
+- **examples/bdd-workflow.toml**: Automated BDD scenario implementation
 - **refactor-codebase.toml**: Safe code refactoring with testing
 - **security-audit.toml**: Security scanning and remediation
 

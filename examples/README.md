@@ -4,12 +4,11 @@ This directory contains example TOML configurations demonstrating various use ca
 
 ## Available Examples
 
-### 1. [bdd-workflow.toml](../bdd-workflow.toml)
+### 1. [bdd-workflow.toml](bdd-workflow.toml)
 **Behavior-Driven Development Workflow**
 - Automatically finds and implements @wip scenarios
 - Runs tests and fixes failures
 - Ensures all tests pass before committing
-- *Note: Located in parent directory*
 
 ### 2. [refactor-codebase.toml](refactor-codebase.toml)
 **Automated Code Refactoring**

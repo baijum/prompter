@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "claude-code-prompter"
-version = "0.4.0"
+version = "0.4.1"
 description = "Run prompts sequentially to tidy large code bases using Claude Code"
 authors = [{name = "Baiju Muthukadan"}]
 license = {text = "MIT"}

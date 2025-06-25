@@ -1,0 +1,168 @@
+# Security Audit and Remediation Workflow
+# Automated security scanning and fixing for Python projects
+
+[settings]
+working_directory = "."
+check_interval = 5
+max_retries = 2
+
+[[tasks]]
+name = "install_security_tools"
+prompt = """
+Ensure security scanning tools are available:
+1. Check if safety, bandit, and pip-audit are installed
+2. If not, note which tools are missing
+3. Create a requirements-dev.txt if it doesn't exist
+4. Add security tools to requirements-dev.txt
+"""
+verify_command = "which safety && which bandit && which pip-audit"
+on_success = "next"
+on_failure = "next"  # Continue anyway, we'll handle missing tools
+timeout = 60
+
+[[tasks]]
+name = "scan_dependencies"
+prompt = """
+Scan for vulnerable dependencies:
+1. Run safety check on requirements files
+2. Run pip-audit for dependency vulnerabilities  
+3. Create a security_report.md with findings
+4. Prioritize critical and high severity issues
+Note: If tools are missing, document that in the report.
+"""
+verify_command = "test -f security_report.md"
+on_success = "next"
+on_failure = "retry"
+timeout = 300
+
+[[tasks]]
+name = "update_vulnerable_deps"
+prompt = """
+Update vulnerable dependencies found in security scan:
+1. Read the security_report.md
+2. For each vulnerable dependency:
+   - Find the minimum safe version
+   - Update requirements.txt/setup.py/pyproject.toml
+   - Ensure compatibility with existing code
+3. Focus on critical/high severity first
+4. Document any dependencies that can't be updated
+"""
+verify_command = "pip install -r requirements.txt --dry-run"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 600
+
+[[tasks]]
+name = "scan_code_vulnerabilities"
+prompt = """
+Scan code for security issues:
+1. Run bandit on all Python files
+2. Identify security vulnerabilities like:
+   - Hardcoded passwords/keys
+   - SQL injection risks
+   - Unsafe deserialization
+   - Path traversal vulnerabilities
+3. Add findings to security_report.md
+4. Categorize by severity
+"""
+verify_command = "bandit -r . -f json -o bandit_report.json"
+on_success = "next"
+on_failure = "next"  # Tool might not be available
+timeout = 300
+
+[[tasks]]
+name = "fix_code_vulnerabilities"
+prompt = """
+Fix identified code security issues:
+1. For each high/critical issue in the bandit report:
+   - Implement the recommended fix
+   - Use secure alternatives (e.g., secrets management)
+   - Add input validation where needed
+2. Focus on actual vulnerabilities, not just warnings
+3. Maintain functionality while improving security
+"""
+verify_command = "python -m py_compile **/*.py"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 900
+
+[[tasks]]
+name = "add_security_configs"
+prompt = """
+Add security configurations:
+1. Create/update .bandit configuration to skip false positives
+2. Add .safety-policy.json for accepted risks
+3. Create SECURITY.md with:
+   - Security policy
+   - How to report vulnerabilities
+   - Security best practices for contributors
+"""
+verify_command = "test -f SECURITY.md"
+on_success = "next"
+on_failure = "retry"
+timeout = 300
+
+[[tasks]]
+name = "run_tests"
+prompt = """
+Verify security fixes didn't break functionality:
+1. Run all unit tests
+2. Run integration tests if available
+3. If tests fail, note which ones
+4. Determine if failures are due to security fixes
+"""
+verify_command = "pytest"
+on_success = "next"
+on_failure = "next"  # We'll fix in next step
+timeout = 600
+
+[[tasks]]
+name = "fix_test_failures"
+prompt = """
+Fix any tests broken by security updates:
+1. For each failing test:
+   - Understand why it's failing
+   - Update test to work with security fixes
+   - Ensure test still validates correct behavior
+2. Don't compromise security to make tests pass
+"""
+verify_command = "pytest"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 600
+
+[[tasks]]
+name = "final_security_scan"
+prompt = """
+Run final security validation:
+1. Re-run all security scanners
+2. Verify critical/high issues are resolved
+3. Update security_report.md with:
+   - Fixed vulnerabilities
+   - Remaining low-risk issues
+   - Recommendations for future
+4. Create a SECURITY_FIXES.md summarizing changes
+"""
+verify_command = "test -f SECURITY_FIXES.md"
+on_success = "next"
+on_failure = "retry"
+timeout = 300
+
+[[tasks]]
+name = "commit_security_fixes"
+prompt = """
+Commit security improvements:
+1. Stage all security-related changes
+2. Create commit message:
+   - Use "security:" prefix
+   - List major vulnerabilities fixed
+   - Reference CVEs if applicable
+3. Don't include sensitive information in commit message
+"""
+verify_command = "git diff --staged | grep -q ."
+on_success = "stop"
+on_failure = "retry"
+timeout = 120

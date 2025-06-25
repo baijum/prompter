@@ -1,0 +1,141 @@
+# Automated Codebase Refactoring Workflow
+# This example shows how to safely refactor code with comprehensive testing
+
+[settings]
+working_directory = "."
+check_interval = 10
+max_retries = 3
+
+[[tasks]]
+name = "analyze_code_quality"
+prompt = """
+Analyze the codebase for refactoring opportunities:
+1. Identify code smells and anti-patterns
+2. Find duplicate code that could be extracted
+3. Locate overly complex functions (high cyclomatic complexity)
+4. Create a refactoring plan in refactoring_plan.md
+Focus on the most impactful improvements.
+"""
+verify_command = "test -f refactoring_plan.md"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 2
+timeout = 300
+
+[[tasks]]
+name = "extract_common_code"
+prompt = """
+Based on the refactoring plan, extract duplicate code:
+1. Identify the most duplicated code patterns
+2. Create shared utilities or base classes
+3. Update all occurrences to use the new shared code
+4. Ensure imports are correct
+Make minimal changes - focus only on deduplication.
+"""
+verify_command = "python -m py_compile **/*.py"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 600
+
+[[tasks]]
+name = "simplify_complex_functions"
+prompt = """
+Refactor complex functions identified in the plan:
+1. Break down functions with 10+ lines into smaller functions
+2. Extract complex conditionals into well-named functions
+3. Apply the Single Responsibility Principle
+4. Add type hints where missing
+Keep changes focused and testable.
+"""
+verify_command = "mypy --ignore-missing-imports ."
+on_success = "next"
+on_failure = "next"  # Type hints might not be perfect
+timeout = 600
+
+[[tasks]]
+name = "run_unit_tests"
+prompt = """
+Run all unit tests to ensure refactoring didn't break functionality:
+1. Execute the full test suite
+2. If any tests fail, analyze why
+3. Report which tests are failing
+"""
+verify_command = "pytest -xvs"
+on_success = "next"
+on_failure = "next"
+timeout = 900
+
+[[tasks]]
+name = "fix_broken_tests"
+prompt = """
+Fix any tests broken by refactoring:
+1. For each failing test, understand what changed
+2. Update test code to work with refactored code
+3. Ensure tests still verify the same behavior
+4. Do NOT change the refactored code unless absolutely necessary
+"""
+verify_command = "pytest -xvs"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 600
+
+[[tasks]]
+name = "run_linting"
+prompt = """
+Run code quality tools and fix any issues:
+1. Run the linter (flake8/ruff/eslint)
+2. Fix any style violations
+3. Ensure code follows project conventions
+"""
+verify_command = "ruff check . && ruff format --check ."
+on_success = "next"
+on_failure = "retry"
+max_attempts = 2
+timeout = 300
+
+[[tasks]]
+name = "update_documentation"
+prompt = """
+Update documentation to reflect refactoring:
+1. Update docstrings for modified functions
+2. Update README if public API changed
+3. Add comments for complex refactored sections
+Keep documentation concise and accurate.
+"""
+verify_command = "echo 'Documentation updated'"
+on_success = "next"
+on_failure = "next"
+timeout = 300
+
+[[tasks]]
+name = "final_validation"
+prompt = """
+Perform final validation of all changes:
+1. Run all tests one more time
+2. Check that code quality improved
+3. Verify no functionality was lost
+4. Create a summary of changes in REFACTORING_SUMMARY.md
+"""
+verify_command = "pytest && test -f REFACTORING_SUMMARY.md"
+on_success = "next"
+on_failure = "stop"
+max_attempts = 2
+timeout = 600
+
+[[tasks]]
+name = "commit_refactoring"
+prompt = """
+Commit the refactoring changes:
+1. Stage all modified files
+2. Create a commit message that summarizes:
+   - What was refactored
+   - Why it improves the code
+   - Any important notes
+Use conventional commit format: "refactor: [description]"
+"""
+verify_command = "git diff --staged --quiet; test $? -eq 1"  # Ensure something is staged
+on_success = "stop"
+on_failure = "retry"
+timeout = 120

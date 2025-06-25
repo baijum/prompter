@@ -6,6 +6,8 @@ A Python tool for running prompts sequentially to tidy large code bases using Cl
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+> **📚 Resources**: [GitHub Repository](https://github.com/baijum/prompter) | [Examples](https://github.com/baijum/prompter/tree/main/examples) | [System Prompt](https://github.com/baijum/prompter/blob/main/PROMPTER_SYSTEM_PROMPT.md)
+
 ## Requirements
 
 - Python 3.11 or higher
@@ -241,6 +243,132 @@ on_failure = "retry"
 max_attempts = 3
 timeout = 300
 ```
+
+### Configuration Reference
+
+#### Settings (Optional)
+- `working_directory`: Base directory for command execution (default: current directory)
+- `check_interval`: Seconds to wait between task completion and verification (default: 3600)
+- `max_retries`: Global retry limit for all tasks (default: 3)
+
+#### Task Fields
+- `name` (required): Unique identifier for the task
+- `prompt` (required): Instructions for Claude Code to execute
+- `verify_command` (required): Shell command to verify task success
+- `verify_success_code`: Expected exit code for success (default: 0)
+- `on_success`: Action when task succeeds - `"next"`, `"stop"`, or `"repeat"` (default: "next")
+- `on_failure`: Action when task fails - `"retry"`, `"stop"`, or `"next"` (default: "retry")
+- `max_attempts`: Maximum retry attempts for this task (default: 3)
+- `timeout`: Task timeout in seconds (optional)
+
+## Examples and Templates
+
+The project includes ready-to-use workflow templates in the `examples/` directory:
+
+- **bdd-workflow.toml**: Automated BDD scenario implementation
+- **refactor-codebase.toml**: Safe code refactoring with testing
+- **security-audit.toml**: Security scanning and remediation
+
+Find these examples in the [GitHub repository](https://github.com/baijum/prompter/tree/main/examples).
+
+## AI-Assisted Configuration Generation
+
+For complex workflows, you can use AI assistance to generate TOML configurations. We provide a comprehensive system prompt that helps AI assistants understand all the intricacies of the prompter tool.
+
+### Using the System Prompt
+
+1. **Get the system prompt** from the [GitHub repository](https://github.com/baijum/prompter/blob/main/PROMPTER_SYSTEM_PROMPT.md)
+
+2. **Ask your AI assistant** (Claude, ChatGPT, etc.):
+   ```
+   [Paste the system prompt]
+   
+   Now create a prompter TOML configuration for: [describe your workflow]
+   ```
+
+3. **The AI will generate** a properly structured TOML that:
+   - Breaks down complex tasks to avoid JSON parsing issues
+   - Uses appropriate verification commands
+   - Implements proper error handling
+   - Follows best practices for the tool
+
+4. **Validate the generated TOML**:
+   ```bash
+   # Test configuration without executing anything
+   prompter generated-config.toml --dry-run
+   
+   # This will:
+   # - Validate TOML syntax
+   # - Check all required fields
+   # - Display what would be executed
+   # - Show any configuration errors
+   ```
+
+### Important: Avoiding Claude SDK Limitations
+
+The Claude SDK currently has a JSON parsing bug with large responses. To avoid this:
+
+1. **Keep prompts focused and concise** - Each task should have a single, clear objective
+2. **Break complex workflows into smaller tasks** - This is better for reliability anyway
+3. **Avoid asking Claude to echo large files** - Use specific, targeted instructions
+4. **Use the `--debug` flag** if you encounter issues to see detailed error messages
+
+Example of breaking down a complex task:
+
+❌ **Bad (too complex, might fail)**:
+```toml
+[[tasks]]
+name = "refactor_everything"
+prompt = """
+Analyze the entire codebase, identify all issues, fix all problems,
+update all tests, improve documentation, and commit everything.
+"""
+```
+
+✅ **Good (focused tasks)**:
+```toml
+[[tasks]]
+name = "analyze_code"
+prompt = "Identify the top 3 refactoring opportunities in the codebase"
+verify_command = "test -f refactoring_plan.md"
+
+[[tasks]]
+name = "refactor_duplicates"
+prompt = "Extract the most common duplicate code into shared utilities"
+verify_command = "python -m py_compile **/*.py"
+
+[[tasks]]
+name = "run_tests"
+prompt = "Run all tests and report any failures"
+verify_command = "pytest"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"JSONDecodeError: Unterminated string"** - Your prompt is generating responses that are too large
+   - Solution: Break down the task into smaller, focused prompts
+   - Use `--debug` to see the full error details
+
+2. **Task keeps retrying** - The verify_command might not be testing the right thing
+   - Solution: Ensure verify_command actually validates what the task accomplished
+
+3. **"State file corrupted"** - Rare issue with interrupted execution
+   - Solution: Run `prompter --clear-state` to start fresh
+
+### Debug Mode
+
+Run with extensive logging to diagnose issues:
+```bash
+prompter config.toml --debug --log-file debug.log
+```
+
+This provides:
+- Detailed execution traces
+- Claude SDK interaction logs
+- State transition information
+- Timing data for each operation
 
 ## License
 

@@ -1,0 +1,201 @@
+# BDD Workflow Automation Configuration
+# This configuration breaks down the BDD development workflow into sequential tasks
+# to avoid JSON parsing issues with large responses in Claude SDK
+
+[settings]
+# Adjust these based on your project
+working_directory = "."
+check_interval = 5  # Wait 5 seconds between task and verification
+max_retries = 3
+
+[[tasks]]
+name = "locate_wip_scenario"
+prompt = """
+Locate and prepare the most critical BDD scenario for implementation:
+
+1. Scan all BDD feature files in the project
+2. List all scenarios tagged with @wip
+3. Identify the SINGLE most critical scenario (prioritize by complexity and business impact)
+4. Remove ONLY the @wip tag from that specific scenario
+5. Leave all other tags and scenarios untouched
+6. Report which scenario was selected and why it was chosen as most critical
+
+Be precise: modify only the @wip tag of the selected scenario, nothing else.
+"""
+verify_command = "find . -name '*.feature' -type f | head -5"  # Verify feature files exist
+verify_success_code = 0
+on_success = "next"
+on_failure = "retry"
+max_attempts = 2
+timeout = 300
+
+[[tasks]]
+name = "execute_target_scenario"
+prompt = """
+Execute the previously selected scenario (the one where @wip was removed) and analyze results:
+
+1. Run ONLY the specific scenario that had its @wip tag removed
+2. Capture the full execution output
+3. If FAILED:
+   - Analyze the failure trace carefully
+   - Examine relevant production code
+   - Examine relevant test code
+   - Identify the root cause (broken implementation, flaky test, or missing dependencies)
+   - Formulate a minimal solution approach
+4. If PASSED: 
+   - Note that the scenario is already working
+   - Prepare to proceed to validation phase
+
+Report the execution results and any failure analysis.
+"""
+verify_command = "./run-tests.sh"
+verify_success_code = 0
+on_success = "next"
+on_failure = "next"  # Continue even if test fails (we'll fix it)
+max_attempts = 1
+timeout = 600
+
+[[tasks]]
+name = "implement_fixes"
+prompt = """
+If the target scenario failed, implement the minimal necessary fixes:
+
+1. Based on the failure analysis from the previous step, implement the solution
+2. Modify ONLY the necessary files to fix the issue
+3. Make the smallest possible changes that will make the test pass
+4. Focus on fixing the specific failure, not refactoring or improvements
+5. After making changes, re-run the specific scenario to verify it passes
+
+Continue iterating until the scenario passes. If it was already passing, skip this step.
+"""
+verify_command = "./run-tests.sh"  # Run only the target scenario
+verify_success_code = 0
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 900
+
+[[tasks]]
+name = "run_all_bdd_tests"
+prompt = """
+Run comprehensive BDD test validation:
+
+1. Execute ALL BDD tests (not just the target scenario)
+2. Capture and analyze any failures
+3. If any tests fail:
+   - Identify which tests are failing
+   - Determine if the failures are related to your changes
+   - Report the failure details for the next step
+
+This ensures your changes didn't break existing functionality.
+"""
+verify_command = "./run-tests.sh --all-bdd"  # Adjust command as needed
+verify_success_code = 0
+on_success = "next"
+on_failure = "next"  # Continue to analyze failures
+max_attempts = 1
+timeout = 1200
+
+[[tasks]]
+name = "run_unit_tests"
+prompt = """
+Run all unit tests for complete validation:
+
+1. Execute ALL unit tests
+2. Capture and analyze any failures
+3. If any tests fail:
+   - Identify which unit tests are failing
+   - Determine if the failures are related to your changes
+   - Report the failure details
+
+This provides additional confidence that the implementation is correct.
+"""
+verify_command = "./run-tests.sh --unit"  # Adjust command as needed
+verify_success_code = 0
+on_success = "next"
+on_failure = "next"  # Continue to fix if needed
+max_attempts = 1
+timeout = 900
+
+[[tasks]]
+name = "fix_broken_tests"
+prompt = """
+Fix any tests that were broken by the implementation:
+
+1. If previous BDD or unit tests failed:
+   - Analyze each failure to understand the impact
+   - Prioritize fixing breaking changes over the new feature
+   - Implement minimal fixes to make all tests pass
+   - Focus on compatibility with existing functionality
+2. If all tests passed, skip this step
+
+Re-run tests after fixes to ensure everything passes.
+"""
+verify_command = "./run-tests.sh --all"  # Run all tests
+verify_success_code = 0
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+timeout = 1200
+
+[[tasks]]
+name = "final_validation"
+prompt = """
+Perform final validation before committing:
+
+1. Run ALL tests one final time (BDD + unit tests)
+2. Verify that:
+   - The target scenario (previously @wip) passes
+   - All other BDD tests pass
+   - All unit tests pass
+3. Generate a summary of what was implemented
+
+Only proceed if everything is green.
+"""
+verify_command = "./run-tests.sh --all"
+verify_success_code = 0
+on_success = "next"
+on_failure = "stop"  # Don't commit if tests fail
+max_attempts = 2
+timeout = 1200
+
+[[tasks]]
+name = "commit_changes"
+prompt = """
+Commit all changes with a descriptive message:
+
+1. Stage all modified files
+2. Create a commit with a message that includes:
+   - Which BDD scenario was implemented (the one that had @wip)
+   - Brief description of what was fixed/implemented
+   - Any important implementation details
+3. Follow the project's commit message conventions
+
+Example format: "Implement BDD scenario: [scenario name] - [brief description]"
+"""
+verify_command = "git diff --staged"
+verify_success_code = 0
+on_success = "stop"
+on_failure = "retry"
+max_attempts = 2
+timeout = 120
+
+# Optional: Add a cleanup task if something goes wrong
+[[tasks]]
+name = "emergency_rollback"
+prompt = """
+If critical failures occur, rollback changes:
+
+1. Identify any partially applied changes
+2. Revert modifications that broke existing tests
+3. Ensure the codebase is in a stable state
+4. Keep the @wip tag removal if that was successful
+
+This task only runs if manually triggered with --task emergency_rollback
+"""
+verify_command = "git status"
+verify_success_code = 0
+on_success = "stop"
+on_failure = "stop"
+max_attempts = 1
+timeout = 300

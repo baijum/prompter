@@ -3,7 +3,7 @@
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .logging import get_logger
 from .runner import TaskResult
@@ -17,8 +17,8 @@ class TaskState:
         name: str,
         status: str = "pending",
         attempts: int = 0,
-        last_attempt: Optional[float] = None,
-        last_success: Optional[float] = None,
+        last_attempt: float | None = None,
+        last_success: float | None = None,
         error_message: str = "",
     ) -> None:
         self.name = name
@@ -28,7 +28,7 @@ class TaskState:
         self.last_success = last_success
         self.error_message = error_message
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
             "name": self.name,
@@ -40,7 +40,7 @@ class TaskState:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TaskState":
+    def from_dict(cls, data: dict[str, Any]) -> "TaskState":
         """Create from dictionary."""
         return cls(
             name=data["name"],
@@ -55,12 +55,12 @@ class TaskState:
 class StateManager:
     """Manages persistent state for task execution."""
 
-    def __init__(self, state_file: Optional[Path] = None) -> None:
+    def __init__(self, state_file: Path | None = None) -> None:
         self.state_file = state_file or Path(".prompter_state.json")
         self.session_id = str(int(time.time()))
         self.start_time = time.time()
-        self.task_states: Dict[str, TaskState] = {}
-        self.results_history: List[Dict[str, Any]] = []
+        self.task_states: dict[str, TaskState] = {}
+        self.results_history: list[dict[str, Any]] = []
         self.logger = get_logger("state")
 
         # Load existing state if available
@@ -141,7 +141,7 @@ class StateManager:
         state.status = "running"
         self.save_state()
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get a summary of current state."""
         completed = sum(1 for state in self.task_states.values() if state.status == "completed")
         failed = sum(1 for state in self.task_states.values() if state.status == "failed")
@@ -166,14 +166,14 @@ class StateManager:
         if self.state_file.exists():
             self.state_file.unlink()
 
-    def get_failed_tasks(self) -> List[str]:
+    def get_failed_tasks(self) -> list[str]:
         """Get list of task names that have failed."""
         return [
             name for name, state in self.task_states.items()
             if state.status == "failed"
         ]
 
-    def get_completed_tasks(self) -> List[str]:
+    def get_completed_tasks(self) -> list[str]:
         """Get list of task names that have completed successfully."""
         return [
             name for name, state in self.task_states.items()

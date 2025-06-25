@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -15,7 +15,7 @@ def temp_dir():
 
 
 @pytest.fixture
-def sample_config() -> Dict[str, Any]:
+def sample_config() -> dict[str, Any]:
     """Sample configuration data for testing."""
     return {
         "settings": {

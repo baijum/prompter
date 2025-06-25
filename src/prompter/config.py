@@ -2,13 +2,13 @@
 
 import tomllib
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 
 class TaskConfig:
     """Configuration for a single task."""
 
-    def __init__(self, config: Dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any]) -> None:
         self.name: str = config.get("name", "")
         self.prompt: str = config.get("prompt", "")
         self.verify_command: str = config.get("verify_command", "")
@@ -16,7 +16,7 @@ class TaskConfig:
         self.on_success: str = config.get("on_success", "next")
         self.on_failure: str = config.get("on_failure", "retry")
         self.max_attempts: int = config.get("max_attempts", 3)
-        self.timeout: Optional[int] = config.get("timeout")
+        self.timeout: int | None = config.get("timeout")
 
     def __repr__(self) -> str:
         return f"TaskConfig(name='{self.name}')"
@@ -25,7 +25,7 @@ class TaskConfig:
 class PrompterConfig:
     """Main configuration for the prompter tool."""
 
-    def __init__(self, config_path: Union[str, Path]) -> None:
+    def __init__(self, config_path: str | Path) -> None:
         self.config_path = Path(config_path)
         self._config = self._load_config()
 
@@ -35,14 +35,14 @@ class PrompterConfig:
         self.max_retries: int = settings.get("max_retries", 3)
         # Note: claude_command is deprecated when using SDK but kept for backward compatibility
         self.claude_command: str = settings.get("claude_command", "claude")
-        self.working_directory: Optional[str] = settings.get("working_directory")
+        self.working_directory: str | None = settings.get("working_directory")
 
         # Parse tasks
-        self.tasks: List[TaskConfig] = []
+        self.tasks: list[TaskConfig] = []
         for task_config in self._config.get("tasks", []):
             self.tasks.append(TaskConfig(task_config))
 
-    def _load_config(self) -> Dict[str, Any]:
+    def _load_config(self) -> dict[str, Any]:
         """Load and parse the TOML configuration file."""
         if not self.config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {self.config_path}")
@@ -50,14 +50,14 @@ class PrompterConfig:
         with open(self.config_path, "rb") as f:
             return tomllib.load(f)
 
-    def get_task_by_name(self, name: str) -> Optional[TaskConfig]:
+    def get_task_by_name(self, name: str) -> TaskConfig | None:
         """Get a task configuration by name."""
         for task in self.tasks:
             if task.name == name:
                 return task
         return None
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate the configuration and return any errors."""
         errors = []
 

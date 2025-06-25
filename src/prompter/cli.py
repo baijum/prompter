@@ -100,7 +100,7 @@ def main() -> int:
     args = parser.parse_args()
 
     # Set up logging
-    logger = setup_logging(
+    setup_logging(
         level="DEBUG" if args.verbose else "INFO",
         log_file=args.log_file,
         verbose=args.verbose,

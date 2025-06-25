@@ -4,7 +4,6 @@ import asyncio
 import subprocess
 import time
 from pathlib import Path
-from typing import List, Tuple
 
 from claude_code_sdk import ClaudeCodeOptions, query
 
@@ -103,9 +102,9 @@ class TaskRunner:
 
         # Store the last verification output if available
         last_verification_output = ""
-        if 'verify_result' in locals():
+        if "verify_result" in locals():
             last_verification_output = verify_result[1]
-        
+
         return TaskResult(
             task.name,
             success=False,
@@ -123,7 +122,7 @@ class TaskRunner:
             verification_output=f"[DRY RUN] Would run verification: {task.verify_command}",
         )
 
-    def _execute_claude_prompt(self, task: TaskConfig) -> Tuple[bool, str]:
+    def _execute_claude_prompt(self, task: TaskConfig) -> tuple[bool, str]:
         """Execute a Claude Code prompt using SDK."""
         try:
             # Run the async query in a synchronous context
@@ -133,7 +132,7 @@ class TaskRunner:
         except Exception as e:
             return False, f"Error executing Claude SDK task: {e}"
 
-    async def _execute_claude_prompt_async(self, task: TaskConfig) -> Tuple[bool, str]:
+    async def _execute_claude_prompt_async(self, task: TaskConfig) -> tuple[bool, str]:
         """Execute a Claude Code prompt using SDK asynchronously."""
         try:
             # Create options with working directory
@@ -160,12 +159,12 @@ class TaskRunner:
                 return True, output_text.strip()
             return False, "Claude SDK returned empty response"
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise TimeoutError(f"Task timed out after {task.timeout} seconds")
         except Exception:
             raise
 
-    def _verify_task(self, task: TaskConfig) -> Tuple[bool, str]:
+    def _verify_task(self, task: TaskConfig) -> tuple[bool, str]:
         """Verify that a task completed successfully."""
         try:
             # Execute the verification command
@@ -188,7 +187,7 @@ class TaskRunner:
         except Exception as e:
             return False, f"Error running verification command: {e}"
 
-    def run_all_tasks(self) -> List[TaskResult]:
+    def run_all_tasks(self) -> list[TaskResult]:
         """Run all tasks in sequence."""
         results = []
 

@@ -3,12 +3,11 @@
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 
 def setup_logging(
     level: str = "INFO",
-    log_file: Optional[Path] = None,
+    log_file: Path | None = None,
     verbose: bool = False,
 ) -> logging.Logger:
     """Set up logging configuration."""

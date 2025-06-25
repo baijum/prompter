@@ -1,7 +1,7 @@
 """Test helper utilities and fixtures."""
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -145,7 +145,7 @@ def create_temp_config_file(content: str, temp_dir: Path) -> Path:
     return config_file
 
 
-def assert_task_result_matches(result: TaskResult, expected: Dict[str, Any]) -> None:
+def assert_task_result_matches(result: TaskResult, expected: dict[str, Any]) -> None:
     """Assert that a TaskResult matches expected values."""
     if "task_name" in expected:
         assert result.task_name == expected["task_name"]
@@ -159,7 +159,7 @@ def assert_task_result_matches(result: TaskResult, expected: Dict[str, Any]) -> 
         assert expected["output"] in result.output
 
 
-def assert_task_state_matches(state: TaskState, expected: Dict[str, Any]) -> None:
+def assert_task_state_matches(state: TaskState, expected: dict[str, Any]) -> None:
     """Assert that a TaskState matches expected values."""
     if "name" in expected:
         assert state.name == expected["name"]

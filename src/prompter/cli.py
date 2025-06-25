@@ -61,7 +61,8 @@ Examples:
     )
 
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable verbose output",
     )
@@ -122,7 +123,9 @@ def main() -> int:
 
     # Require config file for other operations
     if not args.config:
-        parser.error("Configuration file is required unless using --status or --clear-state")
+        parser.error(
+            "Configuration file is required unless using --status or --clear-state"
+        )
 
     config_path = Path(args.config)
     if not config_path.exists():
@@ -147,7 +150,10 @@ def main() -> int:
         if args.task:
             task = config.get_task_by_name(args.task)
             if not task:
-                print(f"Error: Task '{args.task}' not found in configuration", file=sys.stderr)
+                print(
+                    f"Error: Task '{args.task}' not found in configuration",
+                    file=sys.stderr,
+                )
                 return 1
             tasks_to_run = [task]
         else:
@@ -203,6 +209,7 @@ def main() -> int:
         print(f"Error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 

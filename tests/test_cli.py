@@ -30,14 +30,19 @@ class TestCreateParser:
         """Test parser with all optional flags."""
         parser = create_parser()
 
-        args = parser.parse_args([
-            "config.toml",
-            "--dry-run",
-            "--task", "test_task",
-            "--verbose",
-            "--state-file", "/tmp/state.json",
-            "--log-file", "/tmp/log.txt"
-        ])
+        args = parser.parse_args(
+            [
+                "config.toml",
+                "--dry-run",
+                "--task",
+                "test_task",
+                "--verbose",
+                "--state-file",
+                "/tmp/state.json",
+                "--log-file",
+                "/tmp/log.txt",
+            ]
+        )
 
         assert args.config == "config.toml"
         assert args.dry_run is True
@@ -161,7 +166,9 @@ class TestMainFunction:
 
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
-    def test_main_config_file_not_found(self, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_config_file_not_found(
+        self, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function when config file doesn't exist."""
         mock_state_manager_class.return_value = Mock()
 
@@ -175,7 +182,9 @@ class TestMainFunction:
 
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
-    def test_main_config_validation_errors(self, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_config_validation_errors(
+        self, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function when config has validation errors."""
         mock_state_manager_class.return_value = Mock()
 
@@ -196,14 +205,20 @@ class TestMainFunction:
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
     @patch("prompter.cli.TaskRunner")
-    def test_main_successful_execution(self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_successful_execution(
+        self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function with successful task execution."""
         # Setup mocks
         mock_state_manager = Mock()
         mock_state_manager.get_failed_tasks.return_value = []
         mock_state_manager.get_summary.return_value = {
-            "session_id": "123", "total_tasks": 1, "completed": 1,
-            "failed": 0, "running": 0, "pending": 0
+            "session_id": "123",
+            "total_tasks": 1,
+            "completed": 1,
+            "failed": 0,
+            "running": 0,
+            "pending": 0,
         }
         mock_state_manager.task_states = {}
         mock_state_manager_class.return_value = mock_state_manager
@@ -231,14 +246,20 @@ class TestMainFunction:
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
     @patch("prompter.cli.TaskRunner")
-    def test_main_task_failure(self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_task_failure(
+        self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function when task fails."""
         # Setup mocks
         mock_state_manager = Mock()
         mock_state_manager.get_failed_tasks.return_value = ["failed_task"]
         mock_state_manager.get_summary.return_value = {
-            "session_id": "123", "total_tasks": 1, "completed": 0,
-            "failed": 1, "running": 0, "pending": 0
+            "session_id": "123",
+            "total_tasks": 1,
+            "completed": 0,
+            "failed": 1,
+            "running": 0,
+            "pending": 0,
         }
         mock_state_manager.task_states = {}
         mock_state_manager_class.return_value = mock_state_manager
@@ -279,7 +300,9 @@ verify_command = "make check"
 """)
 
         # Use real components but with a task that doesn't exist
-        with patch.object(sys, "argv", ["prompter", str(config_file), "--task", "nonexistent_task"]):
+        with patch.object(
+            sys, "argv", ["prompter", str(config_file), "--task", "nonexistent_task"]
+        ):
             # Mock only the problematic path arguments to prevent arg parser issues
             with patch("prompter.cli.create_parser") as mock_parser_func:
                 mock_parser = Mock()
@@ -304,14 +327,20 @@ verify_command = "make check"
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
     @patch("prompter.cli.TaskRunner")
-    def test_main_dry_run_mode(self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_dry_run_mode(
+        self, mock_runner_class, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function in dry run mode."""
         # Setup mocks
         mock_state_manager = Mock()
         mock_state_manager.get_failed_tasks.return_value = []
         mock_state_manager.get_summary.return_value = {
-            "session_id": "123", "total_tasks": 1, "completed": 0,
-            "failed": 0, "running": 0, "pending": 1
+            "session_id": "123",
+            "total_tasks": 1,
+            "completed": 0,
+            "failed": 0,
+            "running": 0,
+            "pending": 1,
         }
         mock_state_manager.task_states = {}
         mock_state_manager_class.return_value = mock_state_manager
@@ -345,7 +374,9 @@ verify_command = "make check"
 
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
-    def test_main_exception_handling(self, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_exception_handling(
+        self, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function exception handling."""
         mock_state_manager_class.return_value = Mock()
         mock_config_class.side_effect = Exception("Test exception")
@@ -360,7 +391,9 @@ verify_command = "make check"
 
     @patch("prompter.cli.StateManager")
     @patch("prompter.cli.PrompterConfig")
-    def test_main_exception_handling_verbose(self, mock_config_class, mock_state_manager_class, capsys):
+    def test_main_exception_handling_verbose(
+        self, mock_config_class, mock_state_manager_class, capsys
+    ):
         """Test main function exception handling with verbose output."""
         mock_state_manager_class.return_value = Mock()
         mock_config_class.side_effect = Exception("Test exception")
@@ -400,7 +433,9 @@ verify_command = "make check"
 
     @patch("prompter.cli.setup_logging")
     @patch("prompter.cli.StateManager")
-    def test_main_logging_setup_verbose(self, mock_state_manager_class, mock_setup_logging):
+    def test_main_logging_setup_verbose(
+        self, mock_state_manager_class, mock_setup_logging
+    ):
         """Test that verbose logging is properly set up."""
         mock_manager = Mock()
         mock_manager.get_summary.return_value = {

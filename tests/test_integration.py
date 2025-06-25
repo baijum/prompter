@@ -78,7 +78,9 @@ max_attempts = 1
 
     @patch("prompter.runner.query")
     @patch("subprocess.run")
-    def test_runner_with_real_commands(self, mock_subprocess, mock_query, complete_config_file, temp_dir):
+    def test_runner_with_real_commands(
+        self, mock_subprocess, mock_query, complete_config_file, temp_dir
+    ):
         """Test runner with mocked subprocess calls."""
         # Setup successful command responses
         success_result = Mock()
@@ -135,7 +137,9 @@ max_attempts = 1
 
     @patch("prompter.runner.query")
     @patch("subprocess.run")
-    def test_full_workflow_with_failure_and_retry(self, mock_subprocess, mock_query, temp_dir):
+    def test_full_workflow_with_failure_and_retry(
+        self, mock_subprocess, mock_query, temp_dir
+    ):
         """Test complete workflow with task failure and retry."""
         # Create config with retry logic
         config_content = """[settings]
@@ -221,8 +225,9 @@ max_attempts = 3
             test_args = [
                 "prompter",
                 str(complete_config_file),
-                "--state-file", str(state_file),
-                "--dry-run"
+                "--state-file",
+                str(state_file),
+                "--dry-run",
             ]
 
             with patch.object(sys, "argv", test_args):
@@ -320,7 +325,9 @@ name = ""
         state_manager.update_task_state(completed_result)
 
         # Failed task
-        failed_result = TaskResult("failed_task", success=False, error="Failed", attempts=3)
+        failed_result = TaskResult(
+            "failed_task", success=False, error="Failed", attempts=3
+        )
         state_manager.update_task_state(failed_result)
 
         # Running task
@@ -386,7 +393,9 @@ verify_command = "pwd"
             mock_query.return_value = mock_async_gen()
 
             # Mock subprocess to raise timeout
-            with patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 1)):
+            with patch(
+                "subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 1)
+            ):
                 result = runner.run_task(config.tasks[0])
 
         assert not result.success

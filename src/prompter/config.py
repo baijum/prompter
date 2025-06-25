@@ -72,9 +72,13 @@ class PrompterConfig:
             if not task.verify_command:
                 errors.append(f"Task {i} ({task.name}): verify_command is required")
             if task.on_success not in ["next", "stop", "repeat"]:
-                errors.append(f"Task {i} ({task.name}): on_success must be 'next', 'stop', or 'repeat'")
+                errors.append(
+                    f"Task {i} ({task.name}): on_success must be 'next', 'stop', or 'repeat'"
+                )
             if task.on_failure not in ["retry", "stop", "next"]:
-                errors.append(f"Task {i} ({task.name}): on_failure must be 'retry', 'stop', or 'next'")
+                errors.append(
+                    f"Task {i} ({task.name}): on_failure must be 'retry', 'stop', or 'next'"
+                )
             if task.max_attempts < 1:
                 errors.append(f"Task {i} ({task.name}): max_attempts must be >= 1")
 

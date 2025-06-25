@@ -124,9 +124,7 @@ def create_mock_config(tasks: list = None, **settings) -> Mock:
 
     # Default tasks
     if tasks is None:
-        tasks = [
-            TaskConfigBuilder().name("default_task").build()
-        ]
+        tasks = [TaskConfigBuilder().name("default_task").build()]
     config.tasks = tasks
 
     # Mock methods
@@ -197,6 +195,7 @@ def mock_subprocess_failure():
 
 # Additional fixtures for common test scenarios
 
+
 @pytest.fixture
 def simple_task_config():
     """Simple task configuration for testing."""
@@ -206,45 +205,53 @@ def simple_task_config():
 @pytest.fixture
 def retry_task_config():
     """Task configuration with retry logic."""
-    return (TaskConfigBuilder()
-            .name("retry_task")
-            .prompt("Task that might fail")
-            .on_failure("retry")
-            .max_attempts(3)
-            .build())
+    return (
+        TaskConfigBuilder()
+        .name("retry_task")
+        .prompt("Task that might fail")
+        .on_failure("retry")
+        .max_attempts(3)
+        .build()
+    )
 
 
 @pytest.fixture
 def stop_task_config():
     """Task configuration that stops on failure."""
-    return (TaskConfigBuilder()
-            .name("stop_task")
-            .prompt("Task that stops on failure")
-            .on_failure("stop")
-            .max_attempts(1)
-            .build())
+    return (
+        TaskConfigBuilder()
+        .name("stop_task")
+        .prompt("Task that stops on failure")
+        .on_failure("stop")
+        .max_attempts(1)
+        .build()
+    )
 
 
 @pytest.fixture
 def successful_task_result():
     """Successful task result for testing."""
-    return (TaskResultBuilder()
-            .task_name("test_task")
-            .success(True)
-            .output("Task completed successfully")
-            .attempts(1)
-            .build())
+    return (
+        TaskResultBuilder()
+        .task_name("test_task")
+        .success(True)
+        .output("Task completed successfully")
+        .attempts(1)
+        .build()
+    )
 
 
 @pytest.fixture
 def failed_task_result():
     """Failed task result for testing."""
-    return (TaskResultBuilder()
-            .task_name("test_task")
-            .success(False)
-            .error("Task failed")
-            .attempts(3)
-            .build())
+    return (
+        TaskResultBuilder()
+        .task_name("test_task")
+        .success(False)
+        .error("Task failed")
+        .attempts(3)
+        .build()
+    )
 
 
 class TestTaskConfigBuilder:
@@ -260,12 +267,14 @@ class TestTaskConfigBuilder:
 
     def test_builder_custom_values(self):
         """Test builder with custom values."""
-        config = (TaskConfigBuilder()
-                  .name("custom_task")
-                  .prompt("Custom prompt")
-                  .verify_command("custom command")
-                  .max_attempts(5)
-                  .build())
+        config = (
+            TaskConfigBuilder()
+            .name("custom_task")
+            .prompt("Custom prompt")
+            .verify_command("custom command")
+            .max_attempts(5)
+            .build()
+        )
 
         assert config.name == "custom_task"
         assert config.prompt == "Custom prompt"
@@ -274,13 +283,15 @@ class TestTaskConfigBuilder:
 
     def test_builder_chaining(self):
         """Test that builder methods can be chained."""
-        config = (TaskConfigBuilder()
-                  .name("chained")
-                  .prompt("Chained prompt")
-                  .on_success("stop")
-                  .on_failure("retry")
-                  .timeout(600)
-                  .build())
+        config = (
+            TaskConfigBuilder()
+            .name("chained")
+            .prompt("Chained prompt")
+            .on_success("stop")
+            .on_failure("retry")
+            .timeout(600)
+            .build()
+        )
 
         assert config.name == "chained"
         assert config.on_success == "stop"
@@ -301,12 +312,14 @@ class TestTaskResultBuilder:
 
     def test_result_builder_custom_values(self):
         """Test result builder with custom values."""
-        result = (TaskResultBuilder()
-                  .task_name("custom_result")
-                  .success(False)
-                  .error("Custom error")
-                  .attempts(3)
-                  .build())
+        result = (
+            TaskResultBuilder()
+            .task_name("custom_result")
+            .success(False)
+            .error("Custom error")
+            .attempts(3)
+            .build()
+        )
 
         assert result.task_name == "custom_result"
         assert result.success is False

@@ -59,15 +59,17 @@ class TestTaskRunner:
     @pytest.fixture
     def sample_task(self):
         """Create a sample task configuration."""
-        return TaskConfig({
-            "name": "test_task",
-            "prompt": "Fix all warnings",
-            "verify_command": "make",
-            "verify_success_code": 0,
-            "on_success": "next",
-            "on_failure": "retry",
-            "max_attempts": 3,
-        })
+        return TaskConfig(
+            {
+                "name": "test_task",
+                "prompt": "Fix all warnings",
+                "verify_command": "make",
+                "verify_success_code": 0,
+                "on_success": "next",
+                "on_failure": "retry",
+                "max_attempts": 3,
+            }
+        )
 
     def test_runner_initialization(self, mock_config):
         """Test TaskRunner initialization."""
@@ -97,7 +99,9 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
-    def test_successful_task_execution(self, mock_subprocess, mock_query, mock_config, sample_task):
+    def test_successful_task_execution(
+        self, mock_subprocess, mock_query, mock_config, sample_task
+    ):
         """Test successful task execution."""
         # Create mock message with text content
         mock_message = Mock()
@@ -130,6 +134,7 @@ class TestTaskRunner:
     @patch("prompter.runner.query")
     def test_claude_sdk_failure(self, mock_query, mock_config, sample_task):
         """Test task execution when Claude SDK fails."""
+
         # Mock SDK query empty response
         async def mock_async_gen():
             return
@@ -146,8 +151,11 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
-    def test_verification_failure_with_retry(self, mock_subprocess, mock_query, mock_config, sample_task):
+    def test_verification_failure_with_retry(
+        self, mock_subprocess, mock_query, mock_config, sample_task
+    ):
         """Test task execution when verification fails but should retry."""
+
         # Mock SDK query success response
         def query_side_effect(*args, **kwargs):
             mock_message = Mock()
@@ -179,15 +187,19 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
-    def test_verification_failure_with_stop(self, mock_subprocess, mock_query, mock_config):
+    def test_verification_failure_with_stop(
+        self, mock_subprocess, mock_query, mock_config
+    ):
         """Test task execution when verification fails and should stop."""
-        task = TaskConfig({
-            "name": "stop_task",
-            "prompt": "Do something",
-            "verify_command": "make",
-            "on_failure": "stop",
-            "max_attempts": 3,
-        })
+        task = TaskConfig(
+            {
+                "name": "stop_task",
+                "prompt": "Do something",
+                "verify_command": "make",
+                "on_failure": "stop",
+                "max_attempts": 3,
+            }
+        )
 
         # Mock SDK query success response
         mock_message = Mock()
@@ -217,13 +229,15 @@ class TestTaskRunner:
     @patch("prompter.runner.query")
     def test_sdk_timeout(self, mock_query, mock_config):
         """Test task execution with timeout."""
-        task = TaskConfig({
-            "name": "timeout_task",
-            "prompt": "Long running task",
-            "verify_command": "make",
-            "timeout": 1,
-            "max_attempts": 1,
-        })
+        task = TaskConfig(
+            {
+                "name": "timeout_task",
+                "prompt": "Long running task",
+                "verify_command": "make",
+                "timeout": 1,
+                "max_attempts": 1,
+            }
+        )
 
         # Mock SDK query timeout
         mock_query.side_effect = TimeoutError("Task timed out")
@@ -251,15 +265,17 @@ class TestTaskRunner:
     def test_verification_timeout(self, mock_subprocess, mock_query, mock_config):
         """Test verification command timeout."""
         # Create a task that stops on failure to avoid retries
-        task = TaskConfig({
-            "name": "test_task",
-            "prompt": "Fix all warnings",
-            "verify_command": "make",
-            "verify_success_code": 0,
-            "on_success": "next",
-            "on_failure": "stop",  # Stop on failure to avoid retries
-            "max_attempts": 3,
-        })
+        task = TaskConfig(
+            {
+                "name": "test_task",
+                "prompt": "Fix all warnings",
+                "verify_command": "make",
+                "verify_success_code": 0,
+                "on_success": "next",
+                "on_failure": "stop",  # Stop on failure to avoid retries
+                "max_attempts": 3,
+            }
+        )
 
         # Mock SDK query success response
         mock_message = Mock()
@@ -292,20 +308,24 @@ class TestTaskRunner:
         config.claude_command = "claude"
         config.working_directory = None
         config.tasks = [
-            TaskConfig({
-                "name": "task1",
-                "prompt": "Fix warnings",
-                "verify_command": "make",
-                "on_success": "next",
-                "max_attempts": 1,
-            }),
-            TaskConfig({
-                "name": "task2",
-                "prompt": "Update docs",
-                "verify_command": "make docs",
-                "on_success": "stop",
-                "max_attempts": 1,
-            }),
+            TaskConfig(
+                {
+                    "name": "task1",
+                    "prompt": "Fix warnings",
+                    "verify_command": "make",
+                    "on_success": "next",
+                    "max_attempts": 1,
+                }
+            ),
+            TaskConfig(
+                {
+                    "name": "task2",
+                    "prompt": "Update docs",
+                    "verify_command": "make docs",
+                    "on_success": "stop",
+                    "max_attempts": 1,
+                }
+            ),
         ]
 
         # Mock SDK query success response
@@ -339,26 +359,32 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
-    def test_run_all_tasks_stop_on_failure(self, mock_subprocess, mock_query, mock_config):
+    def test_run_all_tasks_stop_on_failure(
+        self, mock_subprocess, mock_query, mock_config
+    ):
         """Test running all tasks with stop on failure."""
         config = Mock(spec=PrompterConfig)
         config.check_interval = 0
         config.claude_command = "claude"
         config.working_directory = None
         config.tasks = [
-            TaskConfig({
-                "name": "task1",
-                "prompt": "Fix warnings",
-                "verify_command": "make",
-                "on_failure": "stop",
-                "max_attempts": 1,
-            }),
-            TaskConfig({
-                "name": "task2",
-                "prompt": "Update docs",
-                "verify_command": "make docs",
-                "max_attempts": 1,
-            }),
+            TaskConfig(
+                {
+                    "name": "task1",
+                    "prompt": "Fix warnings",
+                    "verify_command": "make",
+                    "on_failure": "stop",
+                    "max_attempts": 1,
+                }
+            ),
+            TaskConfig(
+                {
+                    "name": "task2",
+                    "prompt": "Update docs",
+                    "verify_command": "make docs",
+                    "max_attempts": 1,
+                }
+            ),
         ]
 
         # Mock SDK query failure (empty response)
@@ -376,15 +402,19 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
-    def test_task_with_custom_success_code(self, mock_subprocess, mock_query, mock_config):
+    def test_task_with_custom_success_code(
+        self, mock_subprocess, mock_query, mock_config
+    ):
         """Test task with custom verification success code."""
-        task = TaskConfig({
-            "name": "custom_success_task",
-            "prompt": "Custom task",
-            "verify_command": "custom_command",
-            "verify_success_code": 2,  # Custom success code
-            "max_attempts": 1,
-        })
+        task = TaskConfig(
+            {
+                "name": "custom_success_task",
+                "prompt": "Custom task",
+                "verify_command": "custom_command",
+                "verify_success_code": 2,  # Custom success code
+                "max_attempts": 1,
+            }
+        )
 
         # Mock SDK query success response
         mock_message = Mock()

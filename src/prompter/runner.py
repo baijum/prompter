@@ -38,7 +38,9 @@ class TaskRunner:
     def __init__(self, config: PrompterConfig, dry_run: bool = False) -> None:
         self.config = config
         self.dry_run = dry_run
-        self.current_directory = Path(config.working_directory) if config.working_directory else Path.cwd()
+        self.current_directory = (
+            Path(config.working_directory) if config.working_directory else Path.cwd()
+        )
         self.logger = get_logger("runner")
 
     def run_task(self, task: TaskConfig) -> TaskResult:
@@ -51,7 +53,9 @@ class TaskRunner:
         attempts = 0
         while attempts < task.max_attempts:
             attempts += 1
-            self.logger.debug(f"Task {task.name} attempt {attempts}/{task.max_attempts}")
+            self.logger.debug(
+                f"Task {task.name} attempt {attempts}/{task.max_attempts}"
+            )
 
             # Execute the prompt with Claude Code
             claude_result = self._execute_claude_prompt(task)
@@ -138,7 +142,7 @@ class TaskRunner:
             # Create options with working directory
             options = ClaudeCodeOptions(
                 cwd=str(self.current_directory),
-                permission_mode="bypassPermissions"  # Auto-accept all actions for automation
+                permission_mode="bypassPermissions",  # Auto-accept all actions for automation
             )
 
             # Collect all messages from the query
@@ -170,7 +174,8 @@ class TaskRunner:
             # Execute the verification command
             result = subprocess.run(
                 task.verify_command,
-                check=False, shell=True,
+                check=False,
+                shell=True,
                 cwd=self.current_directory,
                 capture_output=True,
                 text=True,

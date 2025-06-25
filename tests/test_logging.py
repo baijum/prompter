@@ -38,7 +38,9 @@ class TestSetupLogging:
         assert len(logger.handlers) == 2  # Console + file handler
 
         # Check that one handler is FileHandler
-        file_handlers = [h for h in logger.handlers if isinstance(h, logging.FileHandler)]
+        file_handlers = [
+            h for h in logger.handlers if isinstance(h, logging.FileHandler)
+        ]
         assert len(file_handlers) == 1
 
     def test_setup_logging_invalid_level(self):
@@ -81,7 +83,9 @@ class TestSetupLogging:
         logger = setup_logging(log_file=log_file)
 
         # Should have file handler
-        file_handlers = [h for h in logger.handlers if isinstance(h, logging.FileHandler)]
+        file_handlers = [
+            h for h in logger.handlers if isinstance(h, logging.FileHandler)
+        ]
         assert len(file_handlers) == 1
 
 

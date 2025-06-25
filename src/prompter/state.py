@@ -122,15 +122,19 @@ class StateManager:
             state.error_message = result.error
 
         # Add to results history
-        self.results_history.append({
-            "session_id": self.session_id,
-            "task_name": result.task_name,
-            "success": result.success,
-            "attempts": result.attempts,
-            "timestamp": result.timestamp,
-            "output": result.output[:500] if result.output else "",  # Truncate for storage
-            "error": result.error[:500] if result.error else "",
-        })
+        self.results_history.append(
+            {
+                "session_id": self.session_id,
+                "task_name": result.task_name,
+                "success": result.success,
+                "attempts": result.attempts,
+                "timestamp": result.timestamp,
+                "output": result.output[:500]
+                if result.output
+                else "",  # Truncate for storage
+                "error": result.error[:500] if result.error else "",
+            }
+        )
 
         # Save state after each update
         self.save_state()
@@ -143,10 +147,18 @@ class StateManager:
 
     def get_summary(self) -> dict[str, Any]:
         """Get a summary of current state."""
-        completed = sum(1 for state in self.task_states.values() if state.status == "completed")
-        failed = sum(1 for state in self.task_states.values() if state.status == "failed")
-        running = sum(1 for state in self.task_states.values() if state.status == "running")
-        pending = sum(1 for state in self.task_states.values() if state.status == "pending")
+        completed = sum(
+            1 for state in self.task_states.values() if state.status == "completed"
+        )
+        failed = sum(
+            1 for state in self.task_states.values() if state.status == "failed"
+        )
+        running = sum(
+            1 for state in self.task_states.values() if state.status == "running"
+        )
+        pending = sum(
+            1 for state in self.task_states.values() if state.status == "pending"
+        )
 
         return {
             "session_id": self.session_id,
@@ -169,13 +181,13 @@ class StateManager:
     def get_failed_tasks(self) -> list[str]:
         """Get list of task names that have failed."""
         return [
-            name for name, state in self.task_states.items()
-            if state.status == "failed"
+            name for name, state in self.task_states.items() if state.status == "failed"
         ]
 
     def get_completed_tasks(self) -> list[str]:
         """Get list of task names that have completed successfully."""
         return [
-            name for name, state in self.task_states.items()
+            name
+            for name, state in self.task_states.items()
             if state.status == "completed"
         ]

@@ -361,8 +361,12 @@ class TestStateManager:
         state_file = temp_dir / "completed_tasks_state.json"
         manager = StateManager(state_file)
 
-        manager.task_states["completed_task1"] = TaskState("completed_task1", "completed")
-        manager.task_states["completed_task2"] = TaskState("completed_task2", "completed")
+        manager.task_states["completed_task1"] = TaskState(
+            "completed_task1", "completed"
+        )
+        manager.task_states["completed_task2"] = TaskState(
+            "completed_task2", "completed"
+        )
         manager.task_states["failed_task"] = TaskState("failed_task", "failed")
         manager.task_states["pending_task"] = TaskState("pending_task", "pending")
 
@@ -378,7 +382,7 @@ class TestStateManager:
         manager = StateManager(state_file)
 
         long_output = "A" * 1000  # 1000 characters
-        long_error = "B" * 1000   # 1000 characters
+        long_error = "B" * 1000  # 1000 characters
 
         result = TaskResult(
             task_name="truncation_task",
@@ -391,6 +395,6 @@ class TestStateManager:
 
         history_entry = manager.results_history[0]
         assert len(history_entry["output"]) == 500  # Truncated to 500 chars
-        assert len(history_entry["error"]) == 500   # Truncated to 500 chars
+        assert len(history_entry["error"]) == 500  # Truncated to 500 chars
         assert history_entry["output"] == "A" * 500
         assert history_entry["error"] == "B" * 500

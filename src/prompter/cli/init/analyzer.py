@@ -41,8 +41,11 @@ class ProjectAnalyzer:
         """Analyze project with timeout."""
         try:
             return await asyncio.wait_for(self.analyze(), timeout=timeout)
-        except TimeoutError:
+        except asyncio.TimeoutError:
             raise TimeoutError(f"Analysis timed out after {timeout} seconds")
+        except Exception as e:
+            # Handle any other exceptions that might occur during analysis
+            raise RuntimeError(f"Analysis failed: {str(e)}") from e
 
     async def analyze(self) -> AnalysisResult:
         """Perform comprehensive project analysis."""
@@ -54,11 +57,22 @@ class ProjectAnalyzer:
 
         # Collect analysis results
         response_text = ""
-        async for message in query(prompt=analysis_prompt, options=options):
-            if hasattr(message, "content"):
-                for content in message.content:
-                    if hasattr(content, "text"):
-                        response_text += content.text
+        try:
+            async for message in query(prompt=analysis_prompt, options=options):
+                if hasattr(message, "content"):
+                    for content in message.content:
+                        if hasattr(content, "text"):
+                            response_text += content.text
+        except Exception as e:
+            # If the Claude SDK query fails, provide a helpful error message
+            error_msg = str(e)
+            if "TaskGroup" in error_msg:
+                raise RuntimeError(
+                    "Claude Code SDK encountered an internal error. "
+                    "Please ensure Claude Code is properly installed and running."
+                ) from e
+            else:
+                raise RuntimeError(f"Failed to query Claude Code SDK: {error_msg}") from e
 
         # Parse results
         return self._parse_analysis_response(response_text)

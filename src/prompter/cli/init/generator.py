@@ -41,10 +41,27 @@ class ConfigGenerator:
         try:
             analysis = self._perform_ai_analysis()
             self._handle_ai_flow(analysis)
-        except Exception as e:
-            self.console.print_error(f"\n❌ Error during analysis: {e}")
+        except TimeoutError as e:
+            self.console.print_error(f"\n❌ {e}")
             self.console.print_info(
-                "\nPlease check your Claude Code SDK installation and try again."
+                "\nTip: For large projects, increase the timeout with:"
+            )
+            self.console.print_info("  export PROMPTER_INIT_TIMEOUT=300")
+            sys.exit(1)
+        except RuntimeError as e:
+            self.console.print_error(f"\n❌ {e}")
+            if "Claude Code SDK" in str(e):
+                self.console.print_info(
+                    "\nPlease ensure Claude Code is properly installed and running:"
+                )
+                self.console.print_info("  1. Check installation: claude-code --version")
+                self.console.print_info("  2. Verify it's running: claude-code status")
+                self.console.print_info("  3. Try restarting: claude-code restart")
+            sys.exit(1)
+        except Exception as e:
+            self.console.print_error(f"\n❌ Unexpected error: {e}")
+            self.console.print_info(
+                "\nIf the problem persists, please report this issue."
             )
             sys.exit(1)
 
@@ -88,11 +105,17 @@ class ConfigGenerator:
 
         # Run async analysis with timeout
         timeout = int(os.environ.get("PROMPTER_INIT_TIMEOUT", "120"))
+        
+        # Create a new event loop to avoid potential conflicts
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
-            analysis = asyncio.run(analyzer.analyze_with_timeout(timeout=timeout))
+            analysis = loop.run_until_complete(analyzer.analyze_with_timeout(timeout=timeout))
         except TimeoutError as e:
             msg = f"Analysis timed out after {timeout} seconds. Please try again.\nYou can increase the timeout by setting PROMPTER_INIT_TIMEOUT environment variable."
             raise TimeoutError(msg) from e
+        finally:
+            loop.close()
 
         # Display results
         self._display_analysis_results(analysis)

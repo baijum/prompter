@@ -27,7 +27,9 @@ def setup_logging(
     logger.setLevel(numeric_level)
 
     # Clear any existing handlers
-    logger.handlers.clear()
+    for handler in logger.handlers[:]:
+        handler.close()
+        logger.removeHandler(handler)
 
     # Create formatter
     if debug:

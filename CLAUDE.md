@@ -120,6 +120,10 @@ ruff format .
 mypy src/
 ```
 
+## Important Rules
+
+**MANDATORY**: Always use the `date` command to get the current date when working with dates in documentation or code. Never rely on hardcoded or assumed dates.
+
 ## Architecture Notes
 
 The project automates code tidying tasks through Claude Code SDK (Python):

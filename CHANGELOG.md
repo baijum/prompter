@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-06-26
+
+### 🐛 Bug Fixes
+
+- Added configurable timeout for `--init` command via `PROMPTER_INIT_TIMEOUT` environment variable
+- Improved error message to guide users when AI analysis times out
+- Fixed hardcoded 30-second timeout that was too short for larger projects
+
+### 📚 Documentation
+
+- Removed unimplemented CLI options (`--language`, `--yes`, `--working-dir`) from documentation
+- Added environment variable documentation across all docs
+- Clarified that only `--init` and `--init <filename>` options are currently supported
+
 ## [0.7.1] - 2025-06-26
 
 ### 🐛 Bug Fixes
@@ -30,7 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generates customized TOML configurations based on project needs
   - Interactive mode to confirm and refine AI suggestions
   - Support for multiple language-specific templates
-  - Configurable timeout via `PROMPTER_INIT_TIMEOUT` environment variable (default: 120 seconds)
 
 ### 🛡️ Improvements
 

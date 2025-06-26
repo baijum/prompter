@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2025-01-26
+
+### 🧹 Maintenance
+
+- **Fixed linting and type checking issues**
+  - Reorganized imports in `runner.py` to comply with ruff's import order rules
+  - Added proper type ignore and noqa comments for the claude-code-sdk monkey patch
+  - Ensures all quality checks pass (ruff, mypy, pytest) for cleaner development experience
+
 ## [0.4.1] - 2025-01-25
 
 ### 🐛 Fixed

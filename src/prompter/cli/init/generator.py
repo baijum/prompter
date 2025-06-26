@@ -54,7 +54,9 @@ class ConfigGenerator:
                 self.console.print_info(
                     "\nPlease ensure Claude Code is properly installed and running:"
                 )
-                self.console.print_info("  1. Check installation: claude-code --version")
+                self.console.print_info(
+                    "  1. Check installation: claude-code --version"
+                )
                 self.console.print_info("  2. Verify it's running: claude-code status")
                 self.console.print_info("  3. Try restarting: claude-code restart")
             sys.exit(1)

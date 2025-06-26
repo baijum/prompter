@@ -49,14 +49,14 @@ class ProjectAnalyzer:
     async def analyze(self) -> AnalysisResult:
         """Perform comprehensive project analysis."""
         import logging
+
         logger = logging.getLogger(__name__)
 
         logger.debug(f"Starting analysis for project at: {self.project_path}")
         analysis_prompt = self._build_analysis_prompt()
 
         options = ClaudeCodeOptions(
-            cwd=str(self.project_path),
-            permission_mode="bypassPermissions"
+            cwd=str(self.project_path), permission_mode="bypassPermissions"
         )
 
         # Collect analysis results
@@ -66,7 +66,9 @@ class ProjectAnalyzer:
             message_count = 0
             async for message in query(prompt=analysis_prompt, options=options):
                 message_count += 1
-                logger.debug(f"Received message {message_count}: {type(message).__name__}")
+                logger.debug(
+                    f"Received message {message_count}: {type(message).__name__}"
+                )
                 if hasattr(message, "content"):
                     for content in message.content:
                         if hasattr(content, "text"):
@@ -117,9 +119,18 @@ Analyze and return JSON:
 
         # Look for common project files
         patterns = [
-            "package.json", "pyproject.toml", "setup.py", "setup.cfg",
-            "Cargo.toml", "go.mod", "pom.xml", "build.gradle",
-            "Makefile", "CMakeLists.txt", ".gitignore", "README*"
+            "package.json",
+            "pyproject.toml",
+            "setup.py",
+            "setup.cfg",
+            "Cargo.toml",
+            "go.mod",
+            "pom.xml",
+            "build.gradle",
+            "Makefile",
+            "CMakeLists.txt",
+            ".gitignore",
+            "README*",
         ]
 
         for pattern in patterns:

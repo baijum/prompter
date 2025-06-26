@@ -1,3 +1,3 @@
 """Prompter - A tool for running prompts sequentially with Claude Code."""
 
-__version__ = "0.7.5"
+__version__ = "0.8.0"

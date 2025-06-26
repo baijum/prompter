@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-06-27
+
+### 🚀 New Features
+
+- **Claude Session Resumption for Context Preservation**
+  - New `resume_previous_session` task configuration option enables maintaining full context across tasks
+  - Tasks can now preserve Claude's entire conversation history from previous task executions
+  - Allows building complex, context-aware workflows where later tasks can reference and build upon earlier results
+  - Maintains Claude's understanding of the codebase, modifications made, and project structure
+  - Particularly useful for multi-step refactoring, progressive code improvements, and iterative development workflows
+
+### 🔧 Configuration
+
+- **New Task Option: `resume_previous_session`**
+  - Boolean option (default: `false`) that controls whether to resume the previous Claude session
+  - When `true`, the task starts with the full conversation history from the previous task
+  - Example configuration:
+    ```toml
+    [[tasks]]
+    name = "analyze_code"
+    prompt = "Analyze the codebase for potential improvements"
+    verify_command = "echo 'Analysis complete'"
+
+    [[tasks]]
+    name = "implement_improvements"
+    prompt = "Based on your analysis, implement the top 3 improvements"
+    resume_previous_session = true
+    verify_command = "python -m pytest"
+    ```
+
+### 📚 Documentation
+
+- Updated configuration documentation to explain session resumption feature
+- Added examples demonstrating context-aware task workflows
+- Enhanced best practices guide for using session resumption effectively
+
 ## [0.7.5] - 2025-06-26
 
 ### ✨ New Features

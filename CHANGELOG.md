@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2025-06-26
+
+### 🐛 Bug Fixes
+
+- Added missing `pytest-asyncio` dependency to fix CI test failures
+- Configured pytest with `asyncio_mode = auto` for proper async test support
+- Added asyncio marker to pytest configuration
+
+### 📚 Documentation
+
+- Updated documentation to properly showcase AI-powered --init features
+- Enhanced README with comprehensive AI analysis section
+- Updated examples documentation with AI initialization guidance
+
 ## [0.7.0] - 2025-06-26
 
 ### 🚀 New Features

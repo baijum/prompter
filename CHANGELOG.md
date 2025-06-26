@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2025-06-26
+
+### 🐛 Bug Fixes
+
+- **Fixed version mismatch between `__init__.py` and `pyproject.toml`**
+  - Both files now correctly show the same version number
+  - Added mandatory check in CLAUDE.md to prevent future mismatches
+
+- **Removed broken import in `cli.py`**
+  - Removed import of non-existent `generate_sample_config` function
+  - This was causing ImportError when using the CLI module directly
+
+- **Fixed shell injection vulnerability**
+  - Replaced `shell=True` with `shlex.split()` for safer command execution
+  - Verification commands are now properly parsed to prevent injection attacks
+
+### 🔧 Code Quality Improvements
+
+- **Major code refactoring**
+  - Split 258-line `main()` function into 7 focused, testable functions
+  - Removed dead code: unused `TaskRunner.run_all_tasks()` method
+  - Fixed `locals()` anti-pattern by properly initializing variables
+  - Added missing type hints to all `__init__` methods
+
+- **Created constants module**
+  - Extracted magic numbers (timeouts, limits) to `constants.py`
+  - Improved maintainability and configurability
+
+- **Enhanced test coverage**
+  - Added comprehensive tests for `resource_loader.py` module
+  - Overall test coverage increased to 84.35%
+
+### 📚 Documentation
+
+- Added mandatory rule in CLAUDE.md to ensure version synchronization during releases
+
 ## [0.7.3] - 2025-06-26
 
 ### 🐛 Bug Fixes

@@ -281,20 +281,29 @@ working_directory = "/path/to/project"
 check_interval = 30
 max_retries = 3
 
-# Task that stops on failure
+# Task that stops on failure (max_attempts is ignored)
 [[tasks]]
 name = "critical_fixes"
 prompt = "Fix any critical security vulnerabilities"
 verify_command = "safety check"
-on_failure = "stop"  # Don't continue if this fails
-max_attempts = 1
+on_failure = "stop"  # Stops immediately on first failure
+max_attempts = 3     # This value is ignored when on_failure="stop"
 
-# Task that continues despite failures
+# Task that continues despite failures (max_attempts is ignored)
 [[tasks]]
 name = "optional_cleanup"
 prompt = "Remove unused imports and variables"
 verify_command = "autoflake --check ."
-on_failure = "next"  # Continue to next task even if this fails
+on_failure = "next"  # Moves to next task on first failure
+max_attempts = 3     # This value is ignored when on_failure="next"
+
+# Task that retries on failure (max_attempts is used)
+[[tasks]]
+name = "fix_linting"
+prompt = "Fix all linting errors"
+verify_command = "ruff check ."
+on_failure = "retry" # Will retry up to max_attempts times
+max_attempts = 3     # Task will run up to 3 times before failing
 
 # Task with custom timeout
 [[tasks]]
@@ -326,8 +335,8 @@ name = "fix_build"
 prompt = "Fix build errors and warnings"
 verify_command = "test -f dist/app.js"
 on_success = "test"  # Jump back to 'test' after fixing
-on_failure = "stop"  # Stop if we can't fix the build
-max_attempts = 2
+on_failure = "stop"  # Stop immediately if fix fails (max_attempts ignored)
+max_attempts = 2     # This value is ignored when on_failure="stop"
 
 [[tasks]]
 name = "test"
@@ -341,8 +350,8 @@ name = "fix_tests"
 prompt = "Fix failing tests"
 verify_command = "npm test"
 on_success = "deploy"    # Continue to deploy after fixing
-on_failure = "stop"      # Stop if tests can't be fixed
-max_attempts = 1
+on_failure = "retry"     # Retry the fix if it fails
+max_attempts = 2         # Will try to fix tests up to 2 times
 
 [[tasks]]
 name = "deploy"
@@ -463,6 +472,24 @@ timeout = 300
 - `on_failure`: Action when task fails - `"retry"`, `"stop"`, `"next"`, or any task name (default: "retry")
 - `max_attempts`: Maximum retry attempts for this task (default: 3)
 - `timeout`: Task timeout in seconds (optional, no timeout if not specified)
+
+##### Important: How `on_failure` and `max_attempts` Work Together
+
+The interaction between `on_failure` and `max_attempts` depends on the `on_failure` value:
+
+- **`on_failure = "retry"`**: The task will retry up to `max_attempts` times. Only after all attempts are exhausted will the task be marked as failed.
+  - Example: With `max_attempts = 3`, the task runs 3 times before failing definitively
+
+- **`on_failure = "stop"`**: Execution stops immediately on the first failure. The `max_attempts` value is ignored.
+  - Example: Even with `max_attempts = 3`, the task stops after 1 failed attempt
+
+- **`on_failure = "next"`**: Moves to the next task immediately on the first failure. The `max_attempts` value is ignored.
+  - Example: Even with `max_attempts = 3`, continues to next task after 1 failed attempt
+
+- **`on_failure = "<task_name>"`**: Jumps to the specified task immediately on the first failure. The `max_attempts` value is ignored.
+  - Example: Even with `max_attempts = 3`, jumps to the named task after 1 failed attempt
+
+**In summary**: `max_attempts` is only meaningful when `on_failure = "retry"`. For all other `on_failure` values, the failure action happens immediately after the first failed attempt.
 
 > **Note on Task Jumping:** When using task names in `on_success` or `on_failure`, ensure your workflow has exit conditions to prevent infinite loops. Prompter will skip tasks that have already executed to prevent infinite loops.
 

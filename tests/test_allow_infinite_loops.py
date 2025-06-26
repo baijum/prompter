@@ -1,8 +1,5 @@
 """Tests for allow_infinite_loops setting."""
 
-import pytest
-from pathlib import Path
-
 from prompter.config import PrompterConfig
 
 
@@ -18,7 +15,7 @@ verify_command = "echo test"
 """
         config_file = temp_dir / "default.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is False
 
@@ -34,7 +31,7 @@ verify_command = "echo test"
 """
         config_file = temp_dir / "explicit_false.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is False
 
@@ -50,7 +47,7 @@ verify_command = "echo test"
 """
         config_file = temp_dir / "explicit_true.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is True
 
@@ -69,7 +66,7 @@ verify_command = "echo test"
 """
         config_file = temp_dir / "multiple_settings.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.working_directory == "/tmp"
         assert config.check_interval == 60
@@ -94,14 +91,14 @@ verify_command = "echo other"
 """
         config_file = temp_dir / "loop_enabled.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is True
-        
+
         # Verify the loop configuration is valid
         errors = config.validate()
         assert len(errors) == 0
-        
+
         # Check the self-reference exists
         loop_task = config.get_task_by_name("loop_task")
         assert loop_task.on_success == "loop_task"
@@ -134,15 +131,15 @@ on_failure = "stop"  # Stop if we can't fix it
 """
         config_file = temp_dir / "monitoring.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is True
-        
+
         # This creates an intentional monitoring loop
         monitor = config.get_task_by_name("monitor_system")
         wait = config.get_task_by_name("wait_and_check")
         alert = config.get_task_by_name("alert_and_fix")
-        
+
         # Verify the loop structure
         assert monitor.on_success == "wait_and_check"
         assert wait.on_success == "monitor_system"
@@ -209,13 +206,13 @@ on_success = "poll_for_changes"  # Continue monitoring
 """
         config_file = temp_dir / "ci_workflow.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         assert config.allow_infinite_loops is True
-        
+
         # Verify all tasks eventually loop back to polling
         poll_task = config.get_task_by_name("poll_for_changes")
         assert poll_task is not None
-        
+
         # All paths should eventually lead back to poll_for_changes
         # This is an intentional design for continuous integration

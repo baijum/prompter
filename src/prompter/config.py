@@ -159,28 +159,34 @@ class PrompterConfig:
                     f"Task {i}: name '{task.name}' is a reserved word and cannot be used as a task name. "
                     f"Reserved words are: {', '.join(sorted(RESERVED_ACTIONS))}"
                 )
-            
+
             if not task.prompt:
                 task_errors.append(f"Task {i} ({task.name}): prompt is required")
             if not task.verify_command:
                 task_errors.append(
                     f"Task {i} ({task.name}): verify_command is required"
                 )
-            
+
             # Validate on_success - can be either a reserved action or a task name
-            if task.on_success not in ON_SUCCESS_ACTIONS and task.on_success not in task_names:
+            if (
+                task.on_success not in ON_SUCCESS_ACTIONS
+                and task.on_success not in task_names
+            ):
                 task_errors.append(
                     f"Task {i} ({task.name}): on_success '{task.on_success}' must be one of "
                     f"{', '.join(sorted(ON_SUCCESS_ACTIONS))} or a valid task name"
                 )
-            
+
             # Validate on_failure - can be either a reserved action or a task name
-            if task.on_failure not in ON_FAILURE_ACTIONS and task.on_failure not in task_names:
+            if (
+                task.on_failure not in ON_FAILURE_ACTIONS
+                and task.on_failure not in task_names
+            ):
                 task_errors.append(
                     f"Task {i} ({task.name}): on_failure '{task.on_failure}' must be one of "
                     f"{', '.join(sorted(ON_FAILURE_ACTIONS))} or a valid task name"
                 )
-            
+
             if task.max_attempts < 1:
                 task_errors.append(f"Task {i} ({task.name}): max_attempts must be >= 1")
 

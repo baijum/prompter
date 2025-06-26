@@ -111,14 +111,14 @@ def main() -> int:
 
         # Create a mapping of task names to tasks for jumping
         task_map = {task.name: task for task in config.tasks}
-        
+
         # Track which tasks have been executed to avoid infinite loops
         executed_tasks = set()
-        
+
         # Safety counter for when infinite loops are allowed
         max_iterations = 1000  # Prevent true infinite loops even when allowed
         iteration_count = 0
-        
+
         # If running a specific task, start with just that task
         # Otherwise, start with the list of all tasks
         if args.task:
@@ -132,18 +132,24 @@ def main() -> int:
             # Safety check for runaway loops even when infinite loops are allowed
             iteration_count += 1
             if iteration_count > max_iterations:
-                logger.error(f"Maximum iteration limit ({max_iterations}) reached. Stopping to prevent runaway loop.")
-                print(f"\nError: Maximum iteration limit ({max_iterations}) reached. Stopping execution.")
+                logger.error(
+                    f"Maximum iteration limit ({max_iterations}) reached. Stopping to prevent runaway loop."
+                )
+                print(
+                    f"\nError: Maximum iteration limit ({max_iterations}) reached. Stopping execution."
+                )
                 break
-                
+
             task = tasks_list[current_task_idx]
-            
+
             # Check for infinite loop (unless explicitly allowed)
             if task.name in executed_tasks and not config.allow_infinite_loops:
-                logger.warning(f"Task '{task.name}' has already been executed, skipping to avoid loop")
+                logger.warning(
+                    f"Task '{task.name}' has already been executed, skipping to avoid loop"
+                )
                 current_task_idx += 1
                 continue
-                
+
             logger.debug(f"Processing task: {task.name}")
             print(f"\nExecuting task: {task.name}")
             if args.verbose:
@@ -172,24 +178,26 @@ def main() -> int:
                 print(f"  ✓ Task completed successfully (attempts: {result.attempts})")
                 if args.verbose and result.verification_output:
                     print(f"  Verification output: {result.verification_output}")
-                
+
                 # Handle success action
                 next_action = task.on_success
                 if next_action == "stop":
                     logger.debug(f"Task {task.name} succeeded with on_success=stop")
                     print("Stopping execution after successful task.")
                     break
-                elif next_action == "repeat":
+                if next_action == "repeat":
                     logger.debug(f"Task {task.name} succeeded with on_success=repeat")
                     print("Repeating task...")
                     executed_tasks.remove(task.name)  # Allow re-execution
                     continue
-                elif next_action == "next":
+                if next_action == "next":
                     logger.debug(f"Task {task.name} succeeded with on_success=next")
                     current_task_idx += 1
                 elif next_action in task_map:
                     # Jump to specific task
-                    logger.debug(f"Task {task.name} succeeded, jumping to task '{next_action}'")
+                    logger.debug(
+                        f"Task {task.name} succeeded, jumping to task '{next_action}'"
+                    )
                     print(f"Jumping to task: {next_action}")
                     # Find the task in the original list or add it
                     if next_action not in [t.name for t in tasks_list]:
@@ -213,7 +221,7 @@ def main() -> int:
                     )
                     print("Stopping execution due to task failure.")
                     break
-                elif next_action == "retry":
+                if next_action == "retry":
                     # This is already handled by max_attempts in run_task
                     logger.debug(f"Task {task.name} failed after all retry attempts")
                     current_task_idx += 1
@@ -224,7 +232,9 @@ def main() -> int:
                     current_task_idx += 1
                 elif next_action in task_map:
                     # Jump to specific task
-                    logger.debug(f"Task {task.name} failed, jumping to task '{next_action}'")
+                    logger.debug(
+                        f"Task {task.name} failed, jumping to task '{next_action}'"
+                    )
                     print(f"Jumping to task: {next_action}")
                     # Find the task in the original list or add it
                     if next_action not in [t.name for t in tasks_list]:

@@ -166,8 +166,14 @@ max_attempts = 0
         assert any("name is required" in error for error in errors)
         assert any("prompt is required" in error for error in errors)
         assert any("verify_command is required" in error for error in errors)
-        assert any("on_success" in error and ("must be one of" in error or "invalid" in error) for error in errors)
-        assert any("on_failure" in error and ("must be one of" in error or "invalid" in error) for error in errors)
+        assert any(
+            "on_success" in error and ("must be one of" in error or "invalid" in error)
+            for error in errors
+        )
+        assert any(
+            "on_failure" in error and ("must be one of" in error or "invalid" in error)
+            for error in errors
+        )
         assert any("max_attempts must be >= 1" in error for error in errors)
 
     def test_validate_config_with_missing_required_fields(self, invalid_toml_config):

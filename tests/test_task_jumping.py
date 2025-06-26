@@ -1,9 +1,6 @@
 """Tests for task jumping functionality."""
 
-import pytest
-from pathlib import Path
-
-from prompter.config import PrompterConfig, RESERVED_ACTIONS
+from prompter.config import RESERVED_ACTIONS, PrompterConfig
 
 
 class TestTaskJumping:
@@ -19,12 +16,15 @@ verify_command = "echo ok"
 """
             config_file = temp_dir / f"reserved_{reserved_word}.toml"
             config_file.write_text(config_content)
-            
+
             config = PrompterConfig(config_file)
             errors = config.validate()
-            
+
             assert len(errors) > 0
-            assert any(f"name '{reserved_word}' is a reserved word" in error for error in errors)
+            assert any(
+                f"name '{reserved_word}' is a reserved word" in error
+                for error in errors
+            )
 
     def test_task_jump_on_success(self, temp_dir):
         """Test jumping to a specific task on success."""
@@ -46,10 +46,10 @@ verify_command = "true"
 """
         config_file = temp_dir / "jump_success.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         # Should be valid
         assert len(errors) == 0
         assert config.tasks[0].on_success == "task3"
@@ -69,10 +69,10 @@ verify_command = "true"
 """
         config_file = temp_dir / "jump_failure.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         # Should be valid
         assert len(errors) == 0
         assert config.tasks[0].on_failure == "error_handler"
@@ -87,10 +87,10 @@ on_success = "non_existent_task"
 """
         config_file = temp_dir / "invalid_ref.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         assert len(errors) > 0
         assert any("on_success 'non_existent_task'" in error for error in errors)
         assert any("must be one of" in error for error in errors)
@@ -119,10 +119,10 @@ on_failure = "retry"
 """
         config_file = temp_dir / "mixed.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         # Should be valid
         assert len(errors) == 0
         assert config.tasks[0].on_success == "next"  # Reserved action
@@ -183,18 +183,18 @@ on_failure = "stop"
 """
         config_file = temp_dir / "complex_flow.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         # Should be valid
         assert len(errors) == 0
-        
+
         # Check the flow
         check_env = config.get_task_by_name("check_environment")
         assert check_env.on_success == "build"
         assert check_env.on_failure == "setup_environment"
-        
+
         build = config.get_task_by_name("build")
         assert build.on_success == "test"
         assert build.on_failure == "fix_build"
@@ -211,10 +211,10 @@ max_attempts = 1
 """
         config_file = temp_dir / "self_ref.toml"
         config_file.write_text(config_content)
-        
+
         config = PrompterConfig(config_file)
         errors = config.validate()
-        
+
         # Should be valid - self-reference is allowed
         assert len(errors) == 0
         assert config.tasks[0].on_failure == "retry_task"

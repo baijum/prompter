@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.0] - 2025-01-26
+## [0.6.0] - 2025-01-26
 
 ### 🚀 New Features
 
@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added troubleshooting entry for TOML backslash escaping errors in README.md
 - Added examples of task jumping and conditional workflows
 - Updated configuration reference to document task name restrictions
+- Added comprehensive warnings about infinite loop prevention
+- Created examples for continuous monitoring with `allow_infinite_loops`
+
+## [0.5.0] - 2025-01-26
+
+### 🚀 Initial Release of Task Jumping Feature
+
+- Basic implementation of task jumping functionality
+- Initial documentation updates
 
 ## [0.4.4] - 2025-06-26
 

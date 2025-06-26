@@ -11,9 +11,8 @@ def get_system_prompt() -> str:
     """
     try:
         # Try to load from bundled resources
-        return importlib.resources.read_text(
-            "prompter.resources", "PROMPTER_SYSTEM_PROMPT.md"
-        )
+        files = importlib.resources.files("prompter.resources")
+        return (files / "PROMPTER_SYSTEM_PROMPT.md").read_text()
     except (FileNotFoundError, ModuleNotFoundError):
         # Fallback to basic prompt if resource not found
         return _get_fallback_system_prompt()
@@ -30,7 +29,8 @@ def get_example_config(language: str) -> str | None:
     """
     try:
         filename = f"{language.lower()}_example.toml"
-        return importlib.resources.read_text("prompter.resources.examples", filename)
+        files = importlib.resources.files("prompter.resources.examples")
+        return (files / filename).read_text()
     except (FileNotFoundError, ModuleNotFoundError):
         return None
 

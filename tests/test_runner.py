@@ -48,6 +48,23 @@ class TestTaskResult:
 class TestTaskRunner:
     """Tests for TaskRunner class."""
 
+    class MockAsyncIterator:
+        """A mock async iterator that properly handles async iteration."""
+
+        def __init__(self, items):
+            self.items = items
+            self.index = 0
+
+        def __aiter__(self):
+            return self
+
+        async def __anext__(self):
+            if self.index >= len(self.items):
+                raise StopAsyncIteration
+            item = self.items[self.index]
+            self.index += 1
+            return item
+
     @pytest.fixture
     def mock_config(self):
         """Create a mock configuration."""
@@ -110,10 +127,7 @@ class TestTaskRunner:
         mock_message.content = [mock_content]
 
         # Make query return an async generator
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification command success
         verify_result = Mock()
@@ -136,11 +150,7 @@ class TestTaskRunner:
         """Test task execution when Claude SDK fails."""
 
         # Mock SDK query empty response
-        async def mock_async_gen():
-            return
-            yield  # Make it a generator but don't yield anything
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([])
 
         runner = TaskRunner(mock_config)
         result = runner.run_task(sample_task)
@@ -163,10 +173,7 @@ class TestTaskRunner:
             mock_content.text = "Task completed"
             mock_message.content = [mock_content]
 
-            async def mock_async_gen():
-                yield mock_message
-
-            return mock_async_gen()
+            return self.MockAsyncIterator([mock_message])
 
         mock_query.side_effect = query_side_effect
 
@@ -207,10 +214,7 @@ class TestTaskRunner:
         mock_content.text = "Task completed"
         mock_message.content = [mock_content]
 
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification command failure
         verify_result = Mock()
@@ -283,10 +287,7 @@ class TestTaskRunner:
         mock_content.text = "Task completed"
         mock_message.content = [mock_content]
 
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification timeout
         mock_subprocess.side_effect = subprocess.TimeoutExpired("make", 300)
@@ -334,10 +335,7 @@ class TestTaskRunner:
             mock_content.text = "Task completed"
             mock_message.content = [mock_content]
 
-            async def mock_async_gen():
-                yield mock_message
-
-            return mock_async_gen()
+            return self.MockAsyncIterator([mock_message])
 
         mock_query.side_effect = query_side_effect
 
@@ -386,11 +384,7 @@ class TestTaskRunner:
         ]
 
         # Mock SDK query failure (empty response)
-        async def mock_async_gen():
-            return
-            yield  # Make it a generator but don't yield anything
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([])
 
         runner = TaskRunner(config)
         results = runner.run_all_tasks()
@@ -420,10 +414,7 @@ class TestTaskRunner:
         mock_content.text = "Task completed"
         mock_message.content = [mock_content]
 
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification with custom success code
         verify_result = Mock()
@@ -480,10 +471,7 @@ class TestTaskRunner:
         mock_content.text = "Task completed"
         mock_message.content = [mock_content]
 
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification success
         with patch("prompter.runner.subprocess.run") as mock_subprocess:
@@ -525,10 +513,7 @@ class TestTaskRunner:
         mock_content.text = "Task completed quickly"
         mock_message.content = [mock_content]
 
-        async def mock_async_gen():
-            yield mock_message
-
-        mock_query.return_value = mock_async_gen()
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
 
         # Mock verification success
         with patch("prompter.runner.subprocess.run") as mock_subprocess:
@@ -559,12 +544,9 @@ class TestTaskRunner:
         )
 
         # Always timeout to test retry behavior
-        async def mock_async_gen():
-            # Simulate slow query that will timeout
-            await asyncio.sleep(10)
-            yield  # Never reached due to timeout
-
-        mock_query.return_value = mock_async_gen()
+        # Note: This will be handled by the mock_wait_for.side_effect = TimeoutError()
+        # The MockAsyncIterator won't be reached due to the timeout
+        mock_query.return_value = self.MockAsyncIterator([])
 
         runner = TaskRunner(mock_config)
 

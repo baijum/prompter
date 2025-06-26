@@ -5,8 +5,29 @@ import time
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
-from prompter.runner import TaskResult
 from prompter.state import StateManager, TaskState
+
+
+# Mock TaskResult to avoid importing runner module which causes async warnings
+class TaskResult:
+    """Mock TaskResult for testing."""
+
+    def __init__(
+        self,
+        task_name: str,
+        success: bool,
+        output: str = "",
+        error: str = "",
+        verification_output: str = "",
+        attempts: int = 1,
+    ):
+        self.task_name = task_name
+        self.success = success
+        self.output = output
+        self.error = error
+        self.verification_output = verification_output
+        self.attempts = attempts
+        self.timestamp = time.time()
 
 
 class TestTaskState:

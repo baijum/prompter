@@ -10,20 +10,52 @@ Prompter is a tool that orchestrates AI-powered code maintenance workflows using
 - Flow control (what to do on success/failure)
 - Optional parameters like timeout, max_attempts
 
+## 🔐 Critical Constraints (Non-Negotiable)
+```toml
+[security_rules]
+max_task_length = 7             # Lines per prompt (hard limit)
+response_size = "small"         # Prevent JSON parse errors
+verify_timeout = 5              # Max seconds per verify_command
+dependency_awareness = true     # Must detect project-specific tools
+```
+**Violating these will crash the SDK!** Prioritize safety over completeness.
+
 ## Critical Principles
 
 ### 🛡️ JSON Parsing Safeguards (MUST ENFORCE)
 The Claude SDK has limitations with large responses. To prevent JSON parsing errors:
 - Break complex operations into small, atomic tasks
-- Keep prompts concise (5-7 lines max for complex operations)
+- Keep prompts concise (7 lines max - hard limit)
 - Avoid requesting large file dumps or comprehensive analyses in a single task
 
 ### ✅ Task Design Rules
 1. **Single Responsibility**: One concrete outcome per task
-2. **Verifiable**: Every task MUST have a `verify_command` that completes quickly
+2. **Verifiable**: Every task MUST have a `verify_command` that completes in <5 seconds
 3. **Idempotent**: Safe to rerun without side effects
 4. **Progressive**: Later tasks build on earlier outputs
 5. **Timeout-Aware**: Set realistic time limits based on task complexity
+
+### 🧩 Atomic Task Design (MUST IMPLEMENT)
+Break workflows into micro-tasks with strict boundaries:
+```toml
+# BAD: Monolithic task (will fail)
+[[tasks]]
+prompt = """
+1. Fix lint errors
+2. Update dependencies
+3. Run all tests
+4. Generate docs
+""" # ❌ Too complex!
+
+# GOOD: Atomic tasks
+[[tasks]] # Fix 1 lint category
+prompt = "Fix ruff E501 errors in src/"
+verify_command = "ruff check src/ --select E501 --exit-zero"
+
+[[tasks]] # Update 1 dependency
+prompt = "Update requests to ^2.32.2 in requirements.txt"
+verify_command = "grep 'requests==2.32.2' requirements.txt"
+```
 
 ## Your Analysis Goals
 
@@ -83,17 +115,24 @@ timeout = 300                        # Timeout in seconds (see guidelines below)
 
 ### ⚙️ Verification Command Best Practices
 ```toml
+[verification]
+type = "deterministic"       # Must produce binary outcomes
+speed = "<5s"                # Runtime constraint
+side_effects = "none"        # Never alter state
+
 # GOOD: Fast, deterministic checks
-verify_command = "test -f output.txt"             # File existence
-verify_command = "pytest test_feature.py"          # Specific test execution
-verify_command = "git diff --quiet src/"           # Change detection
-verify_command = "grep -q 'SUCCESS' logs.txt"      # Content verification
-verify_command = "mypy src/ --strict"              # Type checking
+verify_command = "test -f output.txt"                            # File existence
+verify_command = "pytest tests/login_test.py::test_auth_expiry"  # Specific test
+verify_command = "git diff --quiet src/"                         # Change detection
+verify_command = "grep -q '^version = \"1.2.3\"' pyproject.toml" # Config check
+verify_command = "test $(wc -l < security_report.md) -gt 5"      # Output validation
+verify_command = "mypy src/ --strict"                            # Type checking
 
 # BAD: Slow, flaky, or side-effect prone
 verify_command = "npm run full-build"              # Too slow for verification
 verify_command = "curl https://external-api"       # Network-dependent
 verify_command = "sleep 30 && check"               # Arbitrary delays
+verify_command = "make all"                        # Non-atomic
 ```
 
 ### ⏱ Timeout Guidelines
@@ -227,7 +266,49 @@ on_failure = "retry"
 max_attempts = 3
 ```
 
-### 4. Refactoring Workflow
+### 4. BDD Test Implementation Workflow
+```toml
+[[tasks]]
+name = "isolate_wip_scenario"
+prompt = """
+Remove @wip tag from highest priority scenario in features/:
+1. Find scenarios marked with @wip tag
+2. Identify the most critical one based on feature importance
+3. Remove the @wip tag to enable the test
+"""
+verify_command = "git diff -- features/ | grep -v '@wip'"
+on_success = "validate_single_scenario"
+on_failure = "retry"
+timeout = 120
+
+[[tasks]]
+name = "validate_single_scenario"
+prompt = """
+Run the isolated scenario and capture any failures:
+1. Execute the specific scenario that was untagged
+2. Capture detailed failure information if it fails
+3. Document the failure reason for fixing
+"""
+verify_command = "behave -n 'SCENARIO_NAME' --format json | jq '.status' | grep -q 'passed'"
+on_success = "next"
+on_failure = "fix_scenario"  # Proceed to fix even if fails
+max_attempts = 1
+
+[[tasks]]
+name = "fix_scenario"
+prompt = """
+Fix the failing BDD scenario:
+1. Analyze the failure output from the previous run
+2. Update step definitions or feature files as needed
+3. Ensure the scenario accurately reflects requirements
+"""
+verify_command = "behave -n 'SCENARIO_NAME' --format plain"
+on_success = "next"
+on_failure = "retry"
+max_attempts = 3
+```
+
+### 5. Refactoring Workflow
 ```toml
 [[tasks]]
 name = "analyze_code_quality"
@@ -258,7 +339,7 @@ on_failure = "retry"
 max_attempts = 3
 ```
 
-### 5. Documentation Generation
+### 6. Documentation Generation
 ```toml
 [[tasks]]
 name = "generate_api_docs"
@@ -312,6 +393,10 @@ on_failure = "stop"      # Stop workflow if critical task fails
 # Non-blocking failures
 on_success = "next"
 on_failure = "next"      # Continue even if task fails
+
+# Rollback for destructive operations
+on_success = "next"
+on_failure = "rollback"  # Undo changes on failure
 ```
 
 ### Conditional Flow (Task Jumping)
@@ -385,12 +470,38 @@ timeout = 300
 # More tasks following similar pattern...
 ```
 
+## 🚫 Forbidden Patterns
+These will be rejected by the system:
+```python
+# MONOLITHIC TASKS (causes JSON failures)
+prompt = "Fix all issues in the project"  
+
+# OPEN-ENDED VERIFICATION
+verify_command = "check if it looks good"  
+
+# NETWORK-DEPENDENT  
+verify_command = "ping external-api.com"
+
+# NON-DETERMINISTIC
+verify_command = "grep -i error logs/*"  # Case-insensitive may pass accidentally
+```
+
+## 🧭 Configuration Priorities
+Rank tasks by:
+1. **Prevents SDK Crash** → Atomic tasks under 7 lines
+2. **Solves Immediate Pain** → Real issues, not hypothetical
+3. **Verifiable in <5s** → Fast feedback loops
+4. **Uses Existing Toolchain** → No new dependencies
+5. **Requires <3 Retries** → Reliable execution
+
 ## Critical Reminders
 
-⚠️ **NO MONOLITHIC PROMPTS** - Break workflows into 3-8 discrete tasks to avoid JSON parsing errors
-⚠️ **ALL VERIFICATION COMMANDS** must complete in <5s when possible
+⚠️ **NO MONOLITHIC PROMPTS** - Break workflows into 3-8 discrete tasks (7 lines max each)
+⚠️ **ALL VERIFICATION COMMANDS** must complete in <5 seconds
 ⚠️ **SET EXPLICIT TIMEOUTS** for every task based on the guidelines
 ⚠️ **AVOID CIRCULAR DEPENDENCIES** in task jumping - always have exit conditions
 ⚠️ **TEST COMMANDS EXIST** - Ensure pytest/mypy/ruff etc. are actually available
+
+**SDK Stability > Completeness**: Partial success is better than crashed pipeline
 
 Remember: The goal is to help developers automate routine maintenance tasks so they can focus on feature development. Generate configurations that are immediately useful, specific to the analyzed project, and resistant to common failure modes.

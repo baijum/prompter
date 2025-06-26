@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2025-06-27
+
+### 🚀 New Features
+
+- **Task-Specific System Prompts**
+  - New `system_prompt` task configuration option allows customizing Claude's behavior for individual tasks
+  - Enables enforcing planning before execution, setting expertise context, and adding safety constraints
+  - Particularly powerful for critical operations, complex refactoring, and multi-phase workflows
+  - Can be combined with `resume_previous_session` for context-aware, role-specific task execution
+  - Example use cases:
+    - Enforce detailed planning before making changes
+    - Set Claude as a domain expert (security, database, performance, etc.)
+    - Add safety constraints for production deployments
+    - Control output style and approach for different tasks
+
+### 🔧 Configuration
+
+- **New Task Option: `system_prompt`**
+  - Optional string that customizes Claude's behavior for the specific task
+  - When not specified, Claude uses its default behavior
+  - Example configuration:
+    ```toml
+    [[tasks]]
+    name = "careful_refactor"
+    prompt = "Refactor the payment processing module"
+    system_prompt = "You are a senior engineer working on payment systems. Safety is paramount. Before making ANY changes, create a detailed plan including: 1) What will be changed, 2) Potential risks, 3) How to test each change. Present the plan and wait for approval."
+    verify_command = "python -m pytest tests/payment/"
+    ```
+
+### 📚 Documentation
+
+- Added comprehensive documentation section on system prompts with common patterns
+- Created three new example workflows:
+  - `planning-workflow.toml` - Demonstrates enforcing planning before implementation
+  - `safe-production-deploy.toml` - Shows safety-critical deployment with multiple system prompts
+  - `code-review-workflow.toml` - Multi-perspective automated code review
+- Updated CLAUDE.md with system prompt behavior documentation
+
 ## [0.8.0] - 2025-06-27
 
 ### 🚀 New Features

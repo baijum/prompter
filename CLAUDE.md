@@ -137,7 +137,7 @@ Tasks are defined in TOML files with:
 - `verify_success_code`: Expected exit code (default: 0)
 - `on_success`/`on_failure`: What to do next ("next", "stop", "retry")
 - `max_attempts`: Maximum retry attempts
-- `timeout`: Optional timeout for Claude execution
+- `timeout`: Optional timeout in seconds for Claude execution (no timeout if not specified)
 
 ### State Persistence
 The tool maintains state in `.prompter_state.json` to:
@@ -145,6 +145,24 @@ The tool maintains state in `.prompter_state.json` to:
 - Handle interruptions and resumption
 - Provide status reporting
 - Maintain execution history
+
+### Timeout Behavior
+The `timeout` parameter controls how long Claude Code is allowed to run for each task attempt:
+- **Not specified**: Claude Code runs without any time limit until completion
+- **Specified (e.g., `timeout = 300`)**: Execution stops after the specified seconds
+- When a timeout occurs, it counts as a failed attempt and respects the `on_failure` setting
+- Timeouts work with retry logic - if `max_attempts > 1`, the task will retry after a timeout
+
+Example configuration with timeout:
+```toml
+[[tasks]]
+name = "quick_fix"
+prompt = "Fix the simple linting error"
+verify_command = "ruff check ."
+timeout = 60  # 1 minute timeout
+max_attempts = 3
+on_failure = "retry"
+```
 
 ### Usage Patterns
 1. Define tasks in a TOML configuration file

@@ -31,7 +31,7 @@ verify_success_code = 0                 # Expected exit code (default: 0)
 on_success = "next"                     # "next", "stop", or "repeat"
 on_failure = "retry"                    # "retry", "stop", or "next"
 max_attempts = 3                        # Task-specific retry limit
-timeout = 300                           # Seconds before timeout (optional)
+timeout = 300                           # Seconds before timeout (optional, no timeout if omitted)
 ```
 
 ## Critical Best Practices

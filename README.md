@@ -210,7 +210,14 @@ on_failure = "next"  # Continue to next task even if this fails
 name = "slow_operation"
 prompt = "Refactor large legacy module"
 verify_command = "python -m unittest discover"
-timeout = 600  # 10 minutes
+timeout = 600  # 10 minutes - task will be terminated if it exceeds this
+
+# Task without timeout (runs until completion)
+[[tasks]]
+name = "thorough_analysis"
+prompt = "Perform comprehensive security audit"
+verify_command = "security-scan --full"
+# No timeout specified - Claude Code runs without time limit
 ```
 
 #### Multiple Project Workflow
@@ -259,7 +266,7 @@ timeout = 300
 - `on_success`: Action when task succeeds - `"next"`, `"stop"`, or `"repeat"` (default: "next")
 - `on_failure`: Action when task fails - `"retry"`, `"stop"`, or `"next"` (default: "retry")
 - `max_attempts`: Maximum retry attempts for this task (default: 3)
-- `timeout`: Task timeout in seconds (optional)
+- `timeout`: Task timeout in seconds (optional, no timeout if not specified)
 
 ## Examples and Templates
 

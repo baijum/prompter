@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2025-01-26
+
+### 🚀 Added
+
+- **Timeout functionality for Claude Code execution**
+  - Tasks can now specify an optional `timeout` parameter in seconds
+  - When timeout is specified, Claude Code execution stops after the given time
+  - When timeout is not specified, Claude Code runs without any time limit
+  - Timeouts integrate with retry logic - failed attempts due to timeout count towards `max_attempts`
+  - Uses `asyncio.wait_for()` for reliable timeout enforcement
+
+### 📚 Documentation
+
+- **Enhanced timeout documentation**
+  - Added comprehensive timeout behavior section to CLAUDE.md with examples
+  - Updated README.md configuration reference to clarify timeout behavior
+  - Added examples showing tasks with and without timeout
+  - Updated PROMPTER_SYSTEM_PROMPT.md to clarify timeout is optional
+
+### 🧪 Testing
+
+- **Added comprehensive timeout tests**
+  - Test for asyncio.TimeoutError handling
+  - Test for execution without timeout specified
+  - Test for successful execution with timeout
+  - Test for multiple timeout attempts with retry logic
+
 ## [0.4.2] - 2025-01-26
 
 ### 🧹 Maintenance

@@ -4,5 +4,6 @@ include CLAUDE.md
 include example.toml
 include fix-tests.toml
 recursive-include src *.py
+recursive-include src/prompter/resources *.md *.toml
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

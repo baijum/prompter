@@ -10,7 +10,6 @@ from prompter.runner import TaskRunner
 from prompter.state import StateManager
 
 from .arguments import create_parser
-from .sample_config import generate_sample_config
 from .status import print_status
 
 
@@ -49,8 +48,13 @@ def main() -> int:
 
     # Handle init command
     if args.init:
-        logger.debug(f"Handling init command: generating sample config at {args.init}")
-        generate_sample_config(args.init)
+        logger.debug(
+            f"Handling init command: generating AI-powered config at {args.init}"
+        )
+        from .init.generator import ConfigGenerator
+
+        generator = ConfigGenerator(args.init)
+        generator.generate()
         return 0
 
     # Require config file for other operations

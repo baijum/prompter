@@ -11,8 +11,8 @@ def create_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  prompter --init                         # Generate sample prompter.toml
-  prompter --init my-config.toml          # Generate sample configuration file
+  prompter --init                         # Generate AI-powered prompter.toml
+  prompter --init my-config.toml          # Generate AI-powered configuration file
   prompter config.toml                    # Run all tasks from config.toml
   prompter config.toml --dry-run          # Show what would be executed
   prompter config.toml --task fix_warnings # Run only the 'fix_warnings' task
@@ -52,7 +52,7 @@ Examples:
 
     parser.add_argument(
         "--init",
-        help="Generate a sample configuration file (specify filename, defaults to 'prompter.toml')",
+        help="Generate a configuration file with AI assistance (specify filename, defaults to 'prompter.toml')",
         nargs="?",
         const="prompter.toml",
     )

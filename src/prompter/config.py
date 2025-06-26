@@ -109,7 +109,7 @@ class PrompterConfig:
                                     context_lines.append(pointer)
                             else:
                                 context_lines.append(f"    {i + 1:4d} | {line}")
-            except Exception:  # noqa: S110
+            except Exception:
                 # It's okay to fail here - we're just trying to provide better context
                 pass
 

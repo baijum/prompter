@@ -6,7 +6,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from prompter.cli import create_parser, generate_sample_config, main, print_status
+from prompter.cli import create_parser, main, print_status
 from prompter.state import StateManager
 
 
@@ -475,69 +475,59 @@ verify_command = "make check"
         assert call_args[1]["verbose"] is True
 
 
-class TestGenerateSampleConfig:
-    """Tests for the generate_sample_config function."""
+class TestInit:
+    """Tests for the --init functionality."""
 
-    def test_generate_sample_config_creates_file(self, tmp_path):
-        """Test that generate_sample_config creates a valid configuration file."""
-        config_file = tmp_path / "test-config.toml"
+    def test_init_command_creates_config(self, tmp_path, monkeypatch):
+        """Test that --init creates a configuration file."""
+        monkeypatch.chdir(tmp_path)
+        config_file = tmp_path / "prompter.toml"
 
-        generate_sample_config(str(config_file))
+        # Mock the generator to avoid actual AI calls
+        with patch("prompter.cli.init.generator.ConfigGenerator") as mock_generator:
+            mock_instance = Mock()
+            mock_generator.return_value = mock_instance
 
-        assert config_file.exists()
-        content = config_file.read_text()
+            # Simulate --init command
+            args = ["--init"]
+            with patch("sys.argv", ["prompter", *args]):
+                result = main()
 
-        # Check that the file contains expected sections
-        assert "[settings]" in content
-        assert "[[tasks]]" in content
-        assert "fix_compiler_errors" in content
-        assert "format_code" in content
-        assert "update_documentation" in content
+            assert result == 0
+            mock_generator.assert_called_once_with("prompter.toml")
+            mock_instance.generate.assert_called_once()
 
-        # Check that it contains helpful comments
-        assert "# Prompter Configuration File" in content
-        assert "# Replace with your build command" in content
-        assert "# Common verify_command examples:" in content
+    def test_init_command_with_custom_filename(self, tmp_path, monkeypatch):
+        """Test that --init with filename creates custom config file."""
+        monkeypatch.chdir(tmp_path)
 
-    def test_generate_sample_config_overwrite_protection(self, tmp_path, monkeypatch):
-        """Test that generate_sample_config asks before overwriting existing files."""
-        config_file = tmp_path / "existing-config.toml"
-        config_file.write_text("existing content")
+        # Mock the generator
+        with patch("prompter.cli.init.generator.ConfigGenerator") as mock_generator:
+            mock_instance = Mock()
+            mock_generator.return_value = mock_instance
 
-        # Mock input to decline overwrite
-        inputs = iter(["n"])
-        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
+            # Simulate --init with custom filename
+            args = ["--init", "custom.toml"]
+            with patch("sys.argv", ["prompter", *args]):
+                result = main()
 
-        generate_sample_config(str(config_file))
+            assert result == 0
+            mock_generator.assert_called_once_with("custom.toml")
+            mock_instance.generate.assert_called_once()
 
-        # File should still contain original content
-        assert config_file.read_text() == "existing content"
-
-    def test_generate_sample_config_overwrite_accepted(self, tmp_path, monkeypatch):
-        """Test that generate_sample_config overwrites when user confirms."""
-        config_file = tmp_path / "existing-config.toml"
-        config_file.write_text("existing content")
-
-        # Mock input to accept overwrite
-        inputs = iter(["y"])
-        monkeypatch.setattr("builtins.input", lambda _: next(inputs))
-
-        generate_sample_config(str(config_file))
-
-        # File should contain new content
-        content = config_file.read_text()
-        assert "existing content" not in content
-        assert "[settings]" in content
-
-    def test_main_with_init_flag(self, tmp_path):
+    def test_main_with_init_flag(self, tmp_path, monkeypatch):
         """Test main function with --init flag."""
+        monkeypatch.chdir(tmp_path)
         config_file = tmp_path / "init-test.toml"
 
-        with patch.object(sys, "argv", ["prompter", "--init", str(config_file)]):
-            result = main()
+        # Mock the generator
+        with patch("prompter.cli.init.generator.ConfigGenerator") as mock_generator:
+            mock_instance = Mock()
+            mock_generator.return_value = mock_instance
 
-        assert result == 0
-        assert config_file.exists()
-        content = config_file.read_text()
-        assert "[settings]" in content
-        assert "[[tasks]]" in content
+            with patch.object(sys, "argv", ["prompter", "--init", str(config_file)]):
+                result = main()
+
+            assert result == 0
+            mock_generator.assert_called_once_with(str(config_file))
+            mock_instance.generate.assert_called_once()

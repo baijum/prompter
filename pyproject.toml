@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "claude-code-sdk>=0.0.11",
+    "tomli-w>=1.0.0",
 ]
 
 [project.urls]
@@ -70,6 +71,7 @@ ignore = [
     "PTH123",  # Path.open vs open (both are fine)
     "S602",  # Shell=True (needed for verification commands)
     "PLC0415",  # Import placement (sometimes needed for conditional imports)
+    "S110",  # Try-except-pass (used for legitimate fallback logic)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -81,6 +83,7 @@ ignore = [
     "B017", "PT011",  # Broad exception testing (acceptable in tests)
     "F841",  # Unused variables in test setup
     "RUF003", "RUF013",  # Various test-specific warnings
+    "SLF001",  # Private member access in tests
 ]
 
 [tool.mypy]

@@ -55,7 +55,8 @@ class TaskRunner:
             f"Task configuration: name={task.name}, prompt={task.prompt[:100]}..., "
             f"verify_command={task.verify_command}, max_attempts={task.max_attempts}, "
             f"timeout={task.timeout}s, on_success={task.on_success}, on_failure={task.on_failure}, "
-            f"resume_previous_session={task.resume_previous_session}"
+            f"resume_previous_session={task.resume_previous_session}, "
+            f"system_prompt={'<set>' if task.system_prompt else '<not set>'}"
         )
 
         if self.dry_run:
@@ -212,6 +213,7 @@ class TaskRunner:
                 cwd=str(self.current_directory),
                 permission_mode="bypassPermissions",  # Auto-accept all actions for automation
                 resume=resume_session_id,  # Resume previous session if provided
+                system_prompt=task.system_prompt,  # Pass task-specific system prompt if provided
             )
 
             if resume_session_id:

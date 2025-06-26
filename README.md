@@ -418,6 +418,107 @@ name = "continue_work"
 prompt = "Continue implementing the changes we discussed"
 verify_command = "python -m pytest"
 resume_previous_session = true  # Resume from previous task's Claude session
+
+# Task with custom system prompt (for planning or specific behavior)
+[[tasks]]
+name = "planned_refactor"
+prompt = "Refactor the authentication module to use OAuth2"
+system_prompt = "You are a security expert. Always create a detailed plan before making changes. Present the plan and wait for confirmation."
+verify_command = "python -m pytest tests/auth/"
+```
+
+### System Prompts for Task-Specific Behavior
+
+The `system_prompt` feature allows you to customize Claude's behavior for individual tasks. This is particularly powerful for:
+
+- **Enforcing Planning**: Make Claude create and present plans before executing
+- **Setting Expertise Context**: Define specific roles or expertise for different tasks
+- **Adding Safety Constraints**: Ensure careful handling of sensitive operations
+- **Customizing Output Style**: Control how Claude approaches and communicates about tasks
+
+#### Common System Prompt Patterns
+
+##### 1. Planning Before Execution
+```toml
+[[tasks]]
+name = "database_migration"
+prompt = "Migrate the user authentication tables to the new schema"
+system_prompt = "You are a database architect. Before making ANY changes, create a detailed migration plan including: 1) Backup strategy, 2) Step-by-step migration process, 3) Rollback procedure, 4) Testing approach. Present this plan and wait for approval before proceeding."
+verify_command = "python manage.py check_migrations"
+```
+
+##### 2. Safety-First Approach
+```toml
+[[tasks]]
+name = "production_hotfix"
+prompt = "Apply the critical security patch to the authentication system"
+system_prompt = "You are deploying to PRODUCTION. Be extremely cautious. Double-check every change. Add extensive logging. Create minimal, surgical fixes only. Explain each change and its potential impact."
+verify_command = "python -m pytest tests/security/"
+```
+
+##### 3. Code Quality Enforcement
+```toml
+[[tasks]]
+name = "refactor_legacy"
+prompt = "Refactor the legacy payment processing module"
+system_prompt = "You are a senior engineer focused on clean code. Follow SOLID principles. Add comprehensive docstrings. Ensure backward compatibility. Write code that is easy to test and maintain."
+verify_command = "make test-coverage"
+```
+
+##### 4. Learning and Documentation
+```toml
+[[tasks]]
+name = "add_feature"
+prompt = "Add rate limiting to the API endpoints"
+system_prompt = "You are a teaching assistant. As you implement this feature, explain each decision in detail. Add extensive comments explaining not just what the code does, but WHY design decisions were made."
+verify_command = "python -m pytest tests/api/test_rate_limiting.py"
+```
+
+##### 5. Domain-Specific Expertise
+```toml
+[[tasks]]
+name = "optimize_queries"
+prompt = "Optimize the slow database queries identified in the performance report"
+system_prompt = "You are a database performance expert. Always: 1) Run EXPLAIN ANALYZE before and after changes, 2) Consider index usage, 3) Minimize lock contention, 4) Document performance improvements with metrics."
+verify_command = "python scripts/check_query_performance.py"
+```
+
+#### Advanced System Prompt Strategies
+
+##### Combining with Session Resumption
+```toml
+# First task: Analysis phase
+[[tasks]]
+name = "analyze_architecture"
+prompt = "Analyze the current microservices architecture and identify coupling issues"
+system_prompt = "You are a solutions architect. Document all findings in a structured format. Be thorough and systematic."
+verify_command = "test -f architecture_analysis.md"
+
+# Second task: Implementation phase with context
+[[tasks]]
+name = "implement_improvements"
+prompt = "Based on your analysis, implement the highest priority decoupling improvements"
+system_prompt = "You are implementing architectural changes. Refer to your previous analysis. Make incremental, safe changes. Test thoroughly after each change."
+verify_command = "make integration-tests"
+resume_previous_session = true  # Maintains context from analysis
+```
+
+##### Progressive Refinement
+```toml
+# Initial implementation
+[[tasks]]
+name = "quick_prototype"
+prompt = "Create a basic implementation of the new feature"
+system_prompt = "You are prototyping. Focus on getting something working quickly. Don't worry about edge cases yet."
+verify_command = "python -m pytest tests/test_basic.py"
+
+# Hardening phase
+[[tasks]]
+name = "harden_implementation"
+prompt = "Add error handling and edge case handling to the feature"
+system_prompt = "You are a QA engineer. Think about everything that could go wrong. Add comprehensive error handling. Consider edge cases, invalid inputs, and failure modes."
+verify_command = "python -m pytest tests/test_comprehensive.py"
+on_failure = "quick_prototype"  # Go back if we broke something
 ```
 
 #### Task Jumping and Conditional Workflows
@@ -572,6 +673,8 @@ timeout = 300
 - `on_failure`: Action when task fails - `"retry"`, `"stop"`, `"next"`, or any task name (default: "retry")
 - `max_attempts`: Maximum retry attempts for this task (default: 3)
 - `timeout`: Task timeout in seconds (optional, no timeout if not specified)
+- `system_prompt`: Custom system prompt for Claude (optional). Use this to influence Claude's behavior for specific tasks, such as enforcing planning before execution
+- `resume_previous_session`: Resume from previous task's Claude session (default: false)
 
 ##### Important: How `on_failure` and `max_attempts` Work Together
 
@@ -610,9 +713,12 @@ Prompter supports the following environment variables for additional configurati
 
 The project includes ready-to-use workflow templates in the `examples/` directory:
 
-- **examples/bdd-workflow.toml**: Automated BDD scenario implementation
+- **bdd-workflow.toml**: Automated BDD scenario implementation
 - **refactor-codebase.toml**: Safe code refactoring with testing
 - **security-audit.toml**: Security scanning and remediation
+- **planning-workflow.toml**: Enforces planning before implementation using system prompts
+- **safe-production-deploy.toml**: Production deployment with safety checks and rollback plans
+- **code-review-workflow.toml**: Multi-perspective automated code review
 
 Find these examples in the [GitHub repository](https://github.com/baijum/prompter/tree/main/examples).
 

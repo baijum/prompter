@@ -144,6 +144,8 @@ Tasks are defined in TOML files with:
 - `on_success`/`on_failure`: What to do next ("next", "stop", "retry")
 - `max_attempts`: Maximum retry attempts
 - `timeout`: Optional timeout in seconds for Claude execution (no timeout if not specified)
+- `system_prompt`: Optional custom system prompt to control Claude's behavior for the task
+- `resume_previous_session`: Whether to resume from the previous task's Claude session (default: false)
 
 ### State Persistence
 The tool maintains state in `.prompter_state.json` to:
@@ -169,6 +171,28 @@ timeout = 60  # 1 minute timeout
 max_attempts = 3
 on_failure = "retry"
 ```
+
+### System Prompt Behavior
+The `system_prompt` parameter allows customizing Claude's behavior for specific tasks:
+- **Not specified**: Claude uses its default behavior
+- **Specified**: Claude adopts the specified role, constraints, or approach
+- System prompts are particularly useful for:
+  - Enforcing planning before execution
+  - Setting expertise context (e.g., "You are a security expert")
+  - Adding safety constraints for critical operations
+  - Controlling output style and approach
+
+Example configuration with system prompt:
+```toml
+[[tasks]]
+name = "careful_refactor"
+prompt = "Refactor the payment processing module"
+system_prompt = "You are a senior engineer working on payment systems. Safety is paramount. Before making ANY changes, create a detailed plan including: 1) What will be changed, 2) Potential risks, 3) How to test each change. Present the plan and wait for approval."
+verify_command = "python -m pytest tests/payment/"
+timeout = 1800  # 30 minutes for careful work
+```
+
+This is especially powerful when combined with `resume_previous_session` for multi-phase workflows where different expertise is needed at each stage.
 
 ### Usage Patterns
 1. Define tasks in a TOML configuration file

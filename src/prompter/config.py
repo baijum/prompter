@@ -28,6 +28,7 @@ class TaskConfig:
         self.resume_previous_session: bool = config.get(
             "resume_previous_session", False
         )
+        self.system_prompt: str | None = config.get("system_prompt")
 
     def __repr__(self) -> str:
         return f"TaskConfig(name='{self.name}')"

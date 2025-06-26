@@ -1,0 +1,54 @@
+# Planning Workflow Example
+# This demonstrates how to use system_prompt to enforce planning before execution
+
+[settings]
+working_directory = "."
+check_interval = 30
+
+# Phase 1: Analyze and Plan
+[[tasks]]
+name = "analyze_codebase"
+prompt = "Analyze this codebase and identify areas that need refactoring. Focus on code duplication, complex functions, and poor naming."
+system_prompt = "You are a code quality expert. Be systematic and thorough. Create a prioritized list of refactoring opportunities with effort estimates."
+verify_command = "test -f refactoring_plan.md"
+on_success = "review_plan"
+on_failure = "retry"
+max_attempts = 2
+
+# Phase 2: Review and Refine Plan
+[[tasks]]
+name = "review_plan"
+prompt = "Review the refactoring plan and create a detailed implementation strategy for the top 3 items"
+system_prompt = "You are a technical lead reviewing a refactoring plan. For each item: 1) Assess the risk, 2) Define success criteria, 3) Create a step-by-step implementation plan, 4) Identify required tests."
+verify_command = "test -f implementation_strategy.md"
+on_success = "implement_refactoring"
+resume_previous_session = true
+
+# Phase 3: Execute with Constraints
+[[tasks]]
+name = "implement_refactoring"
+prompt = "Implement the first refactoring item from your strategy"
+system_prompt = "You are implementing a refactoring. Rules: 1) Make one logical change at a time, 2) Run tests after each change, 3) Commit frequently with clear messages, 4) If tests fail, revert and try a different approach."
+verify_command = "python -m pytest"
+on_success = "verify_improvements"
+on_failure = "debug_failures"
+resume_previous_session = true
+
+# Phase 4: Handle Failures
+[[tasks]]
+name = "debug_failures"
+prompt = "Tests are failing. Analyze the failures and fix them"
+system_prompt = "You are debugging test failures. First understand why tests are failing. Check if the refactoring broke existing functionality. Create minimal fixes. Document any assumptions that were incorrect."
+verify_command = "python -m pytest"
+on_success = "verify_improvements"
+on_failure = "stop"
+max_attempts = 3
+
+# Phase 5: Verify Success
+[[tasks]]
+name = "verify_improvements"
+prompt = "Verify that the refactoring improved code quality without breaking functionality"
+system_prompt = "You are performing QA. Run all tests, check code coverage, run linters, and measure cyclomatic complexity. Document the improvements achieved."
+verify_command = "make test && make lint && make coverage"
+on_success = "stop"
+on_failure = "stop"

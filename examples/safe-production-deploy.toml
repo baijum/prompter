@@ -1,0 +1,98 @@
+# Safe Production Deployment Workflow
+# Demonstrates using system_prompt for safety-critical operations
+
+[settings]
+working_directory = "."
+check_interval = 60  # 1 minute between checks
+
+# Pre-deployment Checks
+[[tasks]]
+name = "pre_deploy_audit"
+prompt = "Perform a comprehensive pre-deployment audit of the codebase"
+system_prompt = "You are a DevOps engineer preparing for production deployment. Check: 1) No hardcoded secrets or credentials, 2) All debug flags are disabled, 3) Logging is appropriate for production, 4) Error handling is comprehensive, 5) Database migrations are reversible. Document all findings."
+verify_command = "python scripts/pre_deploy_check.py"
+on_success = "create_rollback_plan"
+on_failure = "stop"
+
+# Rollback Planning
+[[tasks]]
+name = "create_rollback_plan"
+prompt = "Create a detailed rollback plan for this deployment"
+system_prompt = "You are a site reliability engineer. Create a step-by-step rollback procedure including: 1) How to quickly revert code changes, 2) Database rollback scripts if needed, 3) Cache invalidation steps, 4) Communication plan for stakeholders. Be specific and actionable."
+verify_command = "test -f rollback_plan.md"
+on_success = "stage_deployment"
+resume_previous_session = true
+
+# Staging Deployment
+[[tasks]]
+name = "stage_deployment"
+prompt = "Deploy the changes to staging environment"
+system_prompt = "You are deploying to STAGING. Follow the deployment checklist exactly. Document each step as you complete it. If anything seems unusual, stop and investigate. After deployment, run smoke tests."
+verify_command = "curl -f https://staging.example.com/health && python scripts/smoke_tests.py staging"
+on_success = "staging_validation"
+on_failure = "investigate_staging_failure"
+timeout = 600  # 10 minutes
+
+# Staging Validation
+[[tasks]]
+name = "staging_validation"
+prompt = "Perform thorough validation of staging deployment"
+system_prompt = "You are a QA engineer validating staging. Run: 1) Full integration test suite, 2) Performance benchmarks, 3) Security scans, 4) User acceptance test scenarios. Compare all metrics with baseline. Flag any regressions."
+verify_command = "make integration-tests-staging"
+on_success = "production_deploy"
+on_failure = "stop"
+timeout = 1800  # 30 minutes
+
+# Production Deployment
+[[tasks]]
+name = "production_deploy"
+prompt = "Deploy to production using blue-green deployment"
+system_prompt = "You are deploying to PRODUCTION. This is critical. Follow blue-green deployment: 1) Deploy to inactive color, 2) Run health checks, 3) Gradually shift traffic (10%, 50%, 100%), 4) Monitor error rates at each stage, 5) Be ready to rollback instantly if error rate increases."
+verify_command = "python scripts/verify_production.py"
+on_success = "post_deploy_monitoring"
+on_failure = "emergency_rollback"
+timeout = 900  # 15 minutes
+
+# Emergency Rollback
+[[tasks]]
+name = "emergency_rollback"
+prompt = "CRITICAL: Execute emergency rollback procedure"
+system_prompt = "EMERGENCY ROLLBACK REQUIRED. Stay calm. Follow the rollback plan exactly. Document what went wrong for post-mortem. Notify on-call team. Verify system stability after rollback."
+verify_command = "python scripts/verify_rollback.py"
+on_success = "create_incident_report"
+on_failure = "stop"
+max_attempts = 1
+
+# Post-Deploy Monitoring
+[[tasks]]
+name = "post_deploy_monitoring"
+prompt = "Monitor production metrics for 30 minutes post-deployment"
+system_prompt = "You are monitoring a fresh production deployment. Watch for: 1) Error rate changes, 2) Response time degradation, 3) Memory/CPU spikes, 4) Database connection pool exhaustion. Document all observations. If any metric degrades >10%, recommend rollback."
+verify_command = "python scripts/check_metrics.py --threshold 10"
+on_success = "deployment_summary"
+on_failure = "emergency_rollback"
+
+# Incident Report
+[[tasks]]
+name = "create_incident_report"
+prompt = "Create an incident report for the failed deployment"
+system_prompt = "You are writing a post-mortem. Be factual and blameless. Include: 1) Timeline of events, 2) What went wrong, 3) How it was detected, 4) Impact assessment, 5) Root cause analysis, 6) Lessons learned, 7) Action items to prevent recurrence."
+verify_command = "test -f incident_report.md"
+on_success = "stop"
+
+# Success Summary
+[[tasks]]
+name = "deployment_summary"
+prompt = "Create a deployment summary report"
+system_prompt = "You are documenting a successful deployment. Include: 1) What was deployed, 2) Deployment timeline, 3) Test results summary, 4) Performance impact (if any), 5) Next steps for monitoring."
+verify_command = "test -f deployment_summary.md"
+on_success = "stop"
+
+# Staging Failure Investigation
+[[tasks]]
+name = "investigate_staging_failure"
+prompt = "Investigate why staging deployment failed"
+system_prompt = "You are troubleshooting a failed staging deployment. Be methodical: 1) Check deployment logs, 2) Verify configuration differences, 3) Check for missing dependencies, 4) Review recent commits. Document findings and recommend fixes."
+verify_command = "test -f staging_failure_analysis.md"
+on_success = "stop"
+on_failure = "stop"

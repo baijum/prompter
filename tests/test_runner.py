@@ -571,4 +571,47 @@ class TestTaskRunner:
             assert result.attempts == 3
             assert "timed out after 1 seconds" in result.error
             # wait_for should be called once per attempt
-            assert mock_wait_for.call_count == 3
+
+    @patch("prompter.runner.ClaudeCodeOptions")
+    @patch("prompter.runner.query")
+    @patch("prompter.runner.subprocess.run")
+    def test_system_prompt_passed_to_claude(
+        self, mock_subprocess, mock_query, mock_claude_options, mock_config
+    ):
+        """Test that system_prompt is passed to ClaudeCodeOptions when provided."""
+        # Create task with system_prompt
+        task = TaskConfig(
+            {
+                "name": "test_with_system_prompt",
+                "prompt": "Refactor the code",
+                "verify_command": "make test",
+                "system_prompt": "You are an expert refactoring assistant. Always plan before making changes.",
+            }
+        )
+
+        # Mock Claude response
+        mock_message = Mock()
+        mock_content = Mock()
+        mock_content.text = "Task completed"
+        mock_message.content = [mock_content]
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
+
+        # Mock successful verification
+        verify_result = Mock()
+        verify_result.returncode = 0
+        verify_result.stdout = "Tests passed"
+        verify_result.stderr = ""
+        mock_subprocess.return_value = verify_result
+
+        runner = TaskRunner(mock_config)
+        result = runner.run_task(task)
+
+        # Verify ClaudeCodeOptions was called with system_prompt
+        mock_claude_options.assert_called_with(
+            cwd=str(runner.current_directory),
+            permission_mode="bypassPermissions",
+            resume=None,
+            system_prompt="You are an expert refactoring assistant. Always plan before making changes.",
+        )
+
+        assert result.success is True

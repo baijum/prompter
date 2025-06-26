@@ -22,6 +22,8 @@ on_success = "next"      # Options: "next", "stop", "repeat"
 on_failure = "retry"     # Options: "retry", "stop", "next"
 max_attempts = 5
 timeout = 7200           # 2 hours timeout for Claude execution
+# Optional: Provide a custom system prompt for this task
+# system_prompt = "You are an expert C++ developer. Always follow RAII principles and modern C++ best practices."
 
 # Example task: Update documentation
 [[tasks]]
@@ -61,4 +63,16 @@ verify_command = "make security-check"
 verify_success_code = 0
 on_success = "next"
 on_failure = "next"      # Continue even if security check fails
+max_attempts = 2
+
+# Example task: Refactor with planning
+# This demonstrates using system_prompt to enforce planning before execution
+[[tasks]]
+name = "planned_refactor"
+prompt = "Refactor the database connection handling to use a connection pool pattern."
+system_prompt = "Before making any code changes, create a detailed plan outlining: 1) What files will be modified, 2) The refactoring approach, 3) Potential risks. Present this plan first and wait for confirmation before proceeding."
+verify_command = "make test"
+verify_success_code = 0
+on_success = "stop"
+on_failure = "retry"
 max_attempts = 2

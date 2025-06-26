@@ -28,6 +28,7 @@ class TestTaskConfig:
         assert task.max_attempts == 3  # default
         assert task.timeout is None  # default
         assert task.resume_previous_session is False  # default
+        assert task.system_prompt is None  # default
 
     def test_task_config_creation_with_all_fields(self):
         """Test creating TaskConfig with all fields specified."""
@@ -41,6 +42,7 @@ class TestTaskConfig:
             "max_attempts": 5,
             "timeout": 600,
             "resume_previous_session": True,
+            "system_prompt": "You are a documentation expert. Always follow best practices.",
         }
 
         task = TaskConfig(config_data)
@@ -54,6 +56,10 @@ class TestTaskConfig:
         assert task.max_attempts == 5
         assert task.timeout == 600
         assert task.resume_previous_session is True
+        assert (
+            task.system_prompt
+            == "You are a documentation expert. Always follow best practices."
+        )
 
     def test_task_config_repr(self):
         """Test TaskConfig string representation."""

@@ -1,0 +1,53 @@
+# Automated Code Review Workflow
+# Uses system_prompt to perform thorough code reviews with different perspectives
+
+[settings]
+working_directory = "."
+check_interval = 10
+
+# Security Review
+[[tasks]]
+name = "security_review"
+prompt = "Review all recent code changes for security vulnerabilities"
+system_prompt = "You are a security engineer performing a code review. Look for: 1) SQL injection risks, 2) XSS vulnerabilities, 3) Authentication/authorization flaws, 4) Sensitive data exposure, 5) Insecure dependencies. For each issue found, explain the risk and provide a secure alternative."
+verify_command = "test -f security_review.md"
+on_success = "performance_review"
+on_failure = "retry"
+max_attempts = 2
+
+# Performance Review
+[[tasks]]
+name = "performance_review"
+prompt = "Review the code changes for performance issues"
+system_prompt = "You are a performance engineer. Analyze for: 1) N+1 query problems, 2) Inefficient algorithms (O(n²) or worse), 3) Memory leaks, 4) Unnecessary database calls, 5) Missing caching opportunities. Provide specific optimization suggestions with expected impact."
+verify_command = "test -f performance_review.md"
+on_success = "maintainability_review"
+resume_previous_session = true
+
+# Maintainability Review
+[[tasks]]
+name = "maintainability_review"
+prompt = "Review the code for maintainability and clean code principles"
+system_prompt = "You are a senior engineer focused on code quality. Check for: 1) Clear naming, 2) Appropriate abstraction levels, 3) SOLID principle violations, 4) Missing tests, 5) Inadequate documentation. Suggest refactoring where needed."
+verify_command = "test -f maintainability_review.md"
+on_success = "create_review_summary"
+resume_previous_session = true
+
+# Create Actionable Summary
+[[tasks]]
+name = "create_review_summary"
+prompt = "Synthesize all reviews into an actionable summary"
+system_prompt = "You are a technical lead creating a code review summary. Organize findings by: 1) Critical issues (must fix), 2) Important issues (should fix), 3) Nice-to-have improvements. For each issue, provide: the problem, the impact, and a specific fix. Make it easy for developers to act on."
+verify_command = "test -f code_review_summary.md"
+on_success = "implement_critical_fixes"
+resume_previous_session = true
+
+# Auto-fix Critical Issues
+[[tasks]]
+name = "implement_critical_fixes"
+prompt = "Implement fixes for all critical security and bug issues identified"
+system_prompt = "You are implementing code review feedback. Focus ONLY on critical issues. For each fix: 1) Make the minimal necessary change, 2) Add a test that would have caught the issue, 3) Document why the change was made. Create one commit per issue fixed."
+verify_command = "python -m pytest && python -m security_scan"
+on_success = "stop"
+on_failure = "stop"
+max_attempts = 2

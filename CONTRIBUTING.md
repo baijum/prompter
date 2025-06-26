@@ -24,7 +24,7 @@ This project follows a standard code of conduct. Please be respectful and constr
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/yourusername/prompter.git
+   git clone https://github.com/baijum/prompter.git
    cd prompter
    ```
 3. **Set up the development environment** (see below)

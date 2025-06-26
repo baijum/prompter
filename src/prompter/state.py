@@ -20,6 +20,7 @@ class TaskState:
         last_attempt: float | None = None,
         last_success: float | None = None,
         error_message: str = "",
+        claude_session_id: str | None = None,
     ) -> None:
         self.name = name
         self.status = status  # pending, running, completed, failed
@@ -27,6 +28,7 @@ class TaskState:
         self.last_attempt = last_attempt
         self.last_success = last_success
         self.error_message = error_message
+        self.claude_session_id = claude_session_id
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
@@ -37,6 +39,7 @@ class TaskState:
             "last_attempt": self.last_attempt,
             "last_success": self.last_success,
             "error_message": self.error_message,
+            "claude_session_id": self.claude_session_id,
         }
 
     @classmethod
@@ -49,6 +52,7 @@ class TaskState:
             last_attempt=data.get("last_attempt"),
             last_success=data.get("last_success"),
             error_message=data.get("error_message", ""),
+            claude_session_id=data.get("claude_session_id"),
         )
 
 
@@ -136,6 +140,13 @@ class StateManager:
         state.attempts = result.attempts
         state.last_attempt = result.timestamp
 
+        # Update claude_session_id if available
+        if result.session_id:
+            state.claude_session_id = result.session_id
+            self.logger.debug(
+                f"Updated Claude session ID for {result.task_name}: {result.session_id}"
+            )
+
         if result.success:
             state.status = "completed"
             state.last_success = result.timestamp
@@ -154,6 +165,7 @@ class StateManager:
         self.results_history.append(
             {
                 "session_id": self.session_id,
+                "claude_session_id": result.session_id,
                 "task_name": result.task_name,
                 "success": result.success,
                 "attempts": result.attempts,

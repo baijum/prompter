@@ -76,6 +76,7 @@ ignore = [
     "S603",  # Subprocess calls (needed for verification commands from config files)
     "PLC0415",  # Import placement (sometimes needed for conditional imports)
     "S110",  # Try-except-pass (used for legitimate fallback logic)
+    "I001",  # Import sorting (handled by pre-commit)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -87,6 +88,8 @@ ignore = [
     "B017", "PT011",  # Broad exception testing (acceptable in tests)
     "F841",  # Unused variables in test setup
     "RUF003", "RUF013",  # Various test-specific warnings
+    "PT001",  # Use of @pytest.fixture() with parentheses is acceptable
+    "PT023",  # Use of @pytest.mark.asyncio() with parentheses is acceptable
     "SLF001",  # Private member access in tests
 ]
 

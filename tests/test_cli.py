@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-
 from prompter.cli import create_parser, main, print_status
 from prompter.state import StateManager
 
@@ -87,7 +86,7 @@ class TestCreateParser:
 class TestPrintStatus:
     """Tests for the print_status function."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_state_manager(self):
         """Create a mock state manager."""
         manager = Mock(spec=StateManager)

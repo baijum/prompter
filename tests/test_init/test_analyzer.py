@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-
 from prompter.cli.init.analyzer import AnalysisResult, ProjectAnalyzer
 
 
@@ -58,7 +57,7 @@ class TestProjectAnalyzer:
         assert analyzer.project_path == tmp_path
         assert "You are an AI assistant" in analyzer.system_prompt
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_timeout_success(self, tmp_path):
         """Test successful analysis within timeout."""
         analyzer = ProjectAnalyzer(tmp_path)
@@ -73,7 +72,7 @@ class TestProjectAnalyzer:
             result = await analyzer.analyze_with_timeout(timeout=5)
             assert result.language == "Python"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_with_timeout_failure(self, tmp_path):
         """Test analysis timeout."""
         analyzer = ProjectAnalyzer(tmp_path)
@@ -184,7 +183,7 @@ class TestProjectAnalyzer:
         assert len(result.suggestions) == 1
         assert result.suggestions[0]["name"] == "improve_code_quality"
 
-    @pytest.mark.asyncio
+    @pytest.mark.asyncio()
     async def test_analyze_full_flow(self, tmp_path):
         """Test full analysis flow with mocked Claude SDK."""
         analyzer = ProjectAnalyzer(tmp_path)

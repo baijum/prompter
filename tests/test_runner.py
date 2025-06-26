@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-
 from prompter.config import PrompterConfig, TaskConfig
 from prompter.runner import TaskResult, TaskRunner
 
@@ -43,6 +42,22 @@ class TestTaskResult:
         assert result.error == ""
         assert result.verification_output == ""
         assert result.attempts == 1
+        assert result.session_id is None
+
+    def test_task_result_with_session_id(self):
+        """Test TaskResult creation with Claude session_id."""
+        session_id = "claude_session_123456"
+        result = TaskResult(
+            task_name="test_task",
+            success=True,
+            output="Task completed",
+            session_id=session_id,
+        )
+
+        assert result.task_name == "test_task"
+        assert result.success is True
+        assert result.session_id == session_id
+        assert result.timestamp > 0
 
 
 class TestTaskRunner:
@@ -65,7 +80,7 @@ class TestTaskRunner:
             self.index += 1
             return item
 
-    @pytest.fixture
+    @pytest.fixture()
     def mock_config(self):
         """Create a mock configuration."""
         config = Mock(spec=PrompterConfig)
@@ -73,7 +88,7 @@ class TestTaskRunner:
         config.working_directory = None
         return config
 
-    @pytest.fixture
+    @pytest.fixture()
     def sample_task(self):
         """Create a sample task configuration."""
         return TaskConfig(
@@ -263,6 +278,44 @@ class TestTaskRunner:
 
         assert result.success is False
         assert "Error executing Claude SDK task" in result.error
+
+    @patch("prompter.runner.query")
+    @patch("prompter.runner.subprocess.run")
+    def test_claude_sdk_result_message_session_id(
+        self, mock_subprocess, mock_query, mock_config, sample_task
+    ):
+        """Test capturing session_id from Claude SDK ResultMessage."""
+        from claude_code_sdk import ResultMessage
+
+        # Mock ResultMessage with session_id
+        result_message = Mock(spec=ResultMessage)
+        result_message.session_id = "test_session_12345"
+
+        # Mock regular message with content
+        regular_message = Mock()
+        mock_content = Mock()
+        mock_content.text = "Task completed successfully"
+        regular_message.content = [mock_content]
+
+        # Return both messages
+        mock_query.return_value = self.MockAsyncIterator(
+            [regular_message, result_message]
+        )
+
+        # Mock successful verification
+        verify_result = Mock()
+        verify_result.returncode = 0
+        verify_result.stdout = "Build successful"
+        verify_result.stderr = ""
+        mock_subprocess.return_value = verify_result
+
+        runner = TaskRunner(mock_config)
+        result = runner.run_task(sample_task)
+
+        # Check that session_id was captured
+        assert result.success is True
+        assert result.session_id == "test_session_12345"
+        assert "Task completed successfully" in result.output
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")

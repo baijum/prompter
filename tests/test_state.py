@@ -20,6 +20,7 @@ class TaskResult:
         error: str = "",
         verification_output: str = "",
         attempts: int = 1,
+        session_id: str | None = None,
     ):
         self.task_name = task_name
         self.success = success
@@ -27,6 +28,7 @@ class TaskResult:
         self.error = error
         self.verification_output = verification_output
         self.attempts = attempts
+        self.session_id = session_id
         self.timestamp = time.time()
 
 
@@ -43,6 +45,7 @@ class TestTaskState:
         assert state.last_attempt is None
         assert state.last_success is None
         assert state.error_message == ""
+        assert state.claude_session_id is None
 
     def test_task_state_creation_with_all_params(self):
         """Test TaskState creation with all parameters."""
@@ -54,6 +57,7 @@ class TestTaskState:
             last_attempt=now,
             last_success=now,
             error_message="Some error",
+            claude_session_id="claude_session_123",
         )
 
         assert state.name == "test_task"
@@ -62,6 +66,7 @@ class TestTaskState:
         assert state.last_attempt == now
         assert state.last_success == now
         assert state.error_message == "Some error"
+        assert state.claude_session_id == "claude_session_123"
 
     def test_task_state_to_dict(self):
         """Test TaskState serialization to dictionary."""
@@ -82,6 +87,7 @@ class TestTaskState:
             "last_attempt": now,
             "last_success": None,
             "error_message": "Error occurred",
+            "claude_session_id": None,
         }
 
         assert state.to_dict() == expected
@@ -116,6 +122,22 @@ class TestTaskState:
         assert state.name == "minimal_task"
         assert state.status == "pending"
         assert state.attempts == 0
+
+    def test_task_state_claude_session_id_serialization(self):
+        """Test TaskState serialization and deserialization with claude_session_id."""
+        state = TaskState(
+            name="test_task",
+            status="completed",
+            claude_session_id="claude_123456",
+        )
+
+        # Test to_dict includes claude_session_id
+        data = state.to_dict()
+        assert data["claude_session_id"] == "claude_123456"
+
+        # Test from_dict restores claude_session_id
+        restored = TaskState.from_dict(data)
+        assert restored.claude_session_id == "claude_123456"
         assert state.last_attempt is None
         assert state.last_success is None
         assert state.error_message == ""
@@ -315,6 +337,36 @@ class TestStateManager:
 
         state = manager.task_states["running_task"]
         assert state.status == "running"
+        mock_save.assert_called_once()
+
+    @patch.object(StateManager, "save_state")
+    def test_update_task_state_with_claude_session_id(self, mock_save, temp_dir):
+        """Test updating task state with Claude session_id."""
+        state_file = temp_dir / "claude_session_state.json"
+        manager = StateManager(state_file)
+
+        # Test with session_id
+        result = TaskResult(
+            task_name="claude_task",
+            success=True,
+            output="Task completed",
+            session_id="claude_session_789",
+            attempts=1,
+        )
+
+        manager.update_task_state(result)
+
+        # Check task state has claude_session_id
+        state = manager.task_states["claude_task"]
+        assert state.claude_session_id == "claude_session_789"
+        assert state.status == "completed"
+
+        # Check results history includes claude_session_id
+        assert len(manager.results_history) == 1
+        history = manager.results_history[0]
+        assert history["claude_session_id"] == "claude_session_789"
+        assert history["task_name"] == "claude_task"
+
         mock_save.assert_called_once()
 
     def test_get_summary(self, temp_dir):

@@ -6,7 +6,7 @@ import subprocess
 import time
 from pathlib import Path
 
-from claude_code_sdk import ClaudeCodeOptions, query
+from claude_code_sdk import ClaudeCodeOptions, ResultMessage, query
 
 from .config import PrompterConfig, TaskConfig
 from .constants import DEFAULT_VERIFICATION_TIMEOUT
@@ -24,6 +24,7 @@ class TaskResult:
         error: str = "",
         verification_output: str = "",
         attempts: int = 1,
+        session_id: str | None = None,
     ) -> None:
         self.task_name = task_name
         self.success = success
@@ -31,6 +32,7 @@ class TaskResult:
         self.error = error
         self.verification_output = verification_output
         self.attempts = attempts
+        self.session_id = session_id
         self.timestamp = time.time()
 
 
@@ -83,6 +85,7 @@ class TaskRunner:
                         success=False,
                         error=f"Failed to execute Claude prompt after {attempts} attempts: {claude_result[1]}",
                         attempts=attempts,
+                        session_id=claude_result[2] if len(claude_result) > 2 else None,
                     )
                 continue
 
@@ -112,6 +115,7 @@ class TaskRunner:
                     output=claude_result[1],
                     verification_output=verify_result[1],
                     attempts=attempts,
+                    session_id=claude_result[2] if len(claude_result) > 2 else None,
                 )
             if task.on_failure == "stop":
                 return TaskResult(
@@ -121,6 +125,7 @@ class TaskRunner:
                     error=f"Verification failed: {verify_result[1]}",
                     verification_output=verify_result[1],
                     attempts=attempts,
+                    session_id=claude_result[2] if len(claude_result) > 2 else None,
                 )
             if task.on_failure == "next":
                 return TaskResult(
@@ -130,6 +135,7 @@ class TaskRunner:
                     error=f"Verification failed, moving to next task: {verify_result[1]}",
                     verification_output=verify_result[1],
                     attempts=attempts,
+                    session_id=claude_result[2] if len(claude_result) > 2 else None,
                 )
                 # Otherwise retry (continue the loop)
 
@@ -142,6 +148,7 @@ class TaskRunner:
             error=f"Task failed after {task.max_attempts} attempts",
             verification_output=last_verification_output,
             attempts=attempts,
+            session_id=claude_result[2] if len(claude_result) > 2 else None,
         )
 
     def _dry_run_task(self, task: TaskConfig) -> TaskResult:
@@ -153,7 +160,7 @@ class TaskRunner:
             verification_output=f"[DRY RUN] Would run verification: {task.verify_command}",
         )
 
-    def _execute_claude_prompt(self, task: TaskConfig) -> tuple[bool, str]:
+    def _execute_claude_prompt(self, task: TaskConfig) -> tuple[bool, str, str | None]:
         """Execute a Claude Code prompt using SDK."""
         try:
             self.logger.debug("Creating asyncio event loop for Claude SDK execution")
@@ -167,12 +174,18 @@ class TaskRunner:
             self.logger.exception(
                 f"Claude SDK task timed out after {task.timeout} seconds"
             )
-            return False, f"Claude SDK task timed out after {task.timeout} seconds"
+            return (
+                False,
+                f"Claude SDK task timed out after {task.timeout} seconds",
+                None,
+            )
         except Exception as e:
             self.logger.exception("Error executing Claude SDK task")
-            return False, f"Error executing Claude SDK task: {e}"
+            return False, f"Error executing Claude SDK task: {e}", None
 
-    async def _execute_claude_prompt_async(self, task: TaskConfig) -> tuple[bool, str]:
+    async def _execute_claude_prompt_async(
+        self, task: TaskConfig
+    ) -> tuple[bool, str, str | None]:
         """Execute a Claude Code prompt using SDK asynchronously."""
 
         async def run_query() -> list:
@@ -197,9 +210,16 @@ class TaskRunner:
             else:
                 messages = await run_query()
 
-            # Extract text content from messages
+            # Extract text content from messages and look for session_id
             output_text = ""
+            session_id = None
+
             for msg in messages:
+                # Check if this is a ResultMessage to extract session_id
+                if isinstance(msg, ResultMessage):
+                    session_id = msg.session_id
+                    self.logger.debug(f"Found Claude session ID: {session_id}")
+
                 # Check if message has content attribute and extract text
                 if hasattr(msg, "content"):
                     for content in msg.content:
@@ -207,8 +227,8 @@ class TaskRunner:
                             output_text += content.text + "\n"
 
             if output_text.strip():
-                return True, output_text.strip()
-            return False, "Claude SDK returned empty response"
+                return True, output_text.strip(), session_id
+            return False, "Claude SDK returned empty response", session_id
 
         except TimeoutError:
             raise TimeoutError(f"Task timed out after {task.timeout} seconds")

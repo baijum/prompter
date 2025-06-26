@@ -7,14 +7,14 @@ from typing import Any
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def temp_dir():
     """Create a temporary directory for tests."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
 
 
-@pytest.fixture
+@pytest.fixture()
 def sample_config() -> dict[str, Any]:
     """Sample configuration data for testing."""
     return {
@@ -46,7 +46,7 @@ def sample_config() -> dict[str, Any]:
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def sample_toml_config(temp_dir, sample_config) -> Path:
     """Create a sample TOML configuration file."""
     config_content = """[settings]
@@ -78,7 +78,7 @@ timeout = 600
     return config_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def invalid_toml_config(temp_dir) -> Path:
     """Create an invalid TOML configuration file."""
     config_content = """[settings]

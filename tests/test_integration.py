@@ -4,7 +4,6 @@ import subprocess
 from unittest.mock import Mock, patch
 
 import pytest
-
 from prompter.cli import main
 from prompter.config import PrompterConfig
 from prompter.runner import TaskRunner
@@ -14,7 +13,7 @@ from prompter.state import StateManager
 class TestEndToEndIntegration:
     """End-to-end integration tests."""
 
-    @pytest.fixture
+    @pytest.fixture()
     def complete_config_file(self, temp_dir):
         """Create a complete configuration file for testing."""
         config_content = """[settings]

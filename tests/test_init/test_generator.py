@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from prompter.cli.init.analyzer import AnalysisResult
 from prompter.cli.init.generator import ConfigGenerator
 

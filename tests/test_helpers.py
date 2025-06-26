@@ -5,7 +5,6 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
-
 from prompter.config import PrompterConfig, TaskConfig
 from prompter.runner import TaskResult
 from prompter.state import TaskState
@@ -168,25 +167,25 @@ def assert_task_state_matches(state: TaskState, expected: dict[str, Any]) -> Non
         assert expected["error_message"] in state.error_message
 
 
-@pytest.fixture
+@pytest.fixture()
 def task_config_builder():
     """Provide TaskConfigBuilder fixture."""
     return TaskConfigBuilder
 
 
-@pytest.fixture
+@pytest.fixture()
 def task_result_builder():
     """Provide TaskResultBuilder fixture."""
     return TaskResultBuilder
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_subprocess_success():
     """Mock successful subprocess result."""
     return MockSubprocessResult(returncode=0, stdout="Success")
 
 
-@pytest.fixture
+@pytest.fixture()
 def mock_subprocess_failure():
     """Mock failed subprocess result."""
     return MockSubprocessResult(returncode=1, stderr="Error")
@@ -195,13 +194,13 @@ def mock_subprocess_failure():
 # Additional fixtures for common test scenarios
 
 
-@pytest.fixture
+@pytest.fixture()
 def simple_task_config():
     """Simple task configuration for testing."""
     return TaskConfigBuilder().name("simple").prompt("Do something").build()
 
 
-@pytest.fixture
+@pytest.fixture()
 def retry_task_config():
     """Task configuration with retry logic."""
     return (
@@ -214,7 +213,7 @@ def retry_task_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def stop_task_config():
     """Task configuration that stops on failure."""
     return (
@@ -227,7 +226,7 @@ def stop_task_config():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def successful_task_result():
     """Successful task result for testing."""
     return (
@@ -240,7 +239,7 @@ def successful_task_result():
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def failed_task_result():
     """Failed task result for testing."""
     return (

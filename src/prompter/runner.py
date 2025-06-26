@@ -1,6 +1,7 @@
 """Task runner for executing prompts with Claude Code."""
 
 import asyncio
+import shlex
 import subprocess
 import time
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 from claude_code_sdk import ClaudeCodeOptions, query
 
 from .config import PrompterConfig, TaskConfig
+from .constants import DEFAULT_VERIFICATION_TIMEOUT
 from .logging import get_logger
 
 
@@ -57,6 +59,7 @@ class TaskRunner:
             return self._dry_run_task(task)
 
         attempts = 0
+        verify_result = (False, "")  # Initialize to avoid locals() check
         while attempts < task.max_attempts:
             attempts += 1
             self.logger.debug(
@@ -130,10 +133,8 @@ class TaskRunner:
                 )
                 # Otherwise retry (continue the loop)
 
-        # Store the last verification output if available
-        last_verification_output = ""
-        if "verify_result" in locals():
-            last_verification_output = verify_result[1]
+        # Store the last verification output
+        last_verification_output = verify_result[1]
 
         return TaskResult(
             task.name,
@@ -218,14 +219,19 @@ class TaskRunner:
         """Verify that a task completed successfully."""
         try:
             # Execute the verification command
-            result = subprocess.run(
-                task.verify_command,
+            # Parse the command properly to avoid shell injection
+            cmd_args = shlex.split(task.verify_command)
+
+            # Security: subprocess.run with user input requires careful handling
+            # Since verification commands come from config files (trusted source),
+            # and we're using shlex.split to parse them safely, this is acceptable
+            result = subprocess.run(  # noqa: S603
+                cmd_args,
                 check=False,
-                shell=True,
                 cwd=self.current_directory,
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout for verification
+                timeout=DEFAULT_VERIFICATION_TIMEOUT,
             )
 
             success = result.returncode == task.verify_success_code
@@ -250,26 +256,3 @@ class TaskRunner:
             return False, "Verification command timed out"
         except Exception as e:
             return False, f"Error running verification command: {e}"
-
-    def run_all_tasks(self) -> list[TaskResult]:
-        """Run all tasks in sequence."""
-        results = []
-
-        for task in self.config.tasks:
-            result = self.run_task(task)
-            results.append(result)
-
-            if not result.success:
-                if task.on_failure == "stop":
-                    break
-                if task.on_failure == "next":
-                    continue
-
-            if result.success and task.on_success == "stop":
-                break
-            if result.success and task.on_success == "repeat":
-                # Add the same task again for repetition
-                # Note: This could lead to infinite loops, might need better handling
-                continue
-
-        return results

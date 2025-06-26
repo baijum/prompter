@@ -124,6 +124,8 @@ mypy src/
 
 **MANDATORY**: Always use the `date` command to get the current date when working with dates in documentation or code. Never rely on hardcoded or assumed dates.
 
+**MANDATORY**: When making changes that affect the version number, ensure the version is synchronized between `pyproject.toml` and `src/prompter/__init__.py`. Both files must have the exact same version string. The version is typically updated during the release process, but if you need to fix a version mismatch, update both locations to match the version in `pyproject.toml`.
+
 ## Architecture Notes
 
 The project automates code tidying tasks through Claude Code SDK (Python):

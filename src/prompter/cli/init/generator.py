@@ -9,6 +9,7 @@ from typing import Any
 
 import tomli_w
 
+from prompter.constants import DEFAULT_INIT_TIMEOUT, DEFAULT_TASK_TIMEOUT
 from prompter.utils.console import Console
 
 from .analyzer import AnalysisResult, ProjectAnalyzer
@@ -18,7 +19,7 @@ from .interactive import InteractiveConfigurator
 class ConfigGenerator:
     """Orchestrates the entire configuration generation process."""
 
-    def __init__(self, filename: str = "prompter.toml"):
+    def __init__(self, filename: str = "prompter.toml") -> None:
         self.filename = filename
         self.console = Console()
         self.project_path = Path.cwd()
@@ -46,7 +47,9 @@ class ConfigGenerator:
             self.console.print_info(
                 "\nTip: For large projects, increase the timeout with:"
             )
-            self.console.print_info("  export PROMPTER_INIT_TIMEOUT=300")
+            self.console.print_info(
+                f"  export PROMPTER_INIT_TIMEOUT={DEFAULT_TASK_TIMEOUT}"
+            )
             sys.exit(1)
         except RuntimeError as e:
             self.console.print_error(f"\n❌ {e}")
@@ -106,7 +109,9 @@ class ConfigGenerator:
         analyzer = ProjectAnalyzer(self.project_path)
 
         # Run async analysis with timeout
-        timeout = int(os.environ.get("PROMPTER_INIT_TIMEOUT", "120"))
+        timeout = int(
+            os.environ.get("PROMPTER_INIT_TIMEOUT", str(DEFAULT_INIT_TIMEOUT))
+        )
 
         try:
             # Use asyncio.run() which properly sets up the event loop
@@ -199,7 +204,7 @@ class ConfigGenerator:
                 "name": suggestion["name"],
                 "prompt": suggestion["prompt"],
                 "verify_command": suggestion["verify_command"],
-                "timeout": 300,
+                "timeout": DEFAULT_TASK_TIMEOUT,
                 "on_success": "next",
                 "on_failure": "retry",
                 "max_attempts": 3,
@@ -213,7 +218,7 @@ class ConfigGenerator:
                     "name": "fix_test_failures",
                     "prompt": f"Run the tests using '{analysis.test_command}' and fix any failures you find. Focus on fixing actual test failures, not warnings.",
                     "verify_command": analysis.test_command,
-                    "timeout": 300,
+                    "timeout": DEFAULT_TASK_TIMEOUT,
                     "on_success": "next",
                     "on_failure": "retry",
                     "max_attempts": 3,
@@ -226,7 +231,7 @@ class ConfigGenerator:
                     "name": "fix_linting_errors",
                     "prompt": f"Run the linter using '{analysis.lint_command}' and fix any errors. Focus on errors, not warnings unless they're critical.",
                     "verify_command": analysis.lint_command,
-                    "timeout": 300,
+                    "timeout": DEFAULT_TASK_TIMEOUT,
                     "on_success": "next",
                     "on_failure": "retry",
                     "max_attempts": 3,
@@ -239,7 +244,7 @@ class ConfigGenerator:
                     "name": "format_code",
                     "prompt": f"Format the codebase using '{analysis.format_command}'. Ensure all code follows the project's style guidelines.",
                     "verify_command": f"{analysis.format_command} --check || {analysis.format_command} --verify || echo 'Formatting complete'",
-                    "timeout": 300,
+                    "timeout": DEFAULT_TASK_TIMEOUT,
                     "on_success": "next",
                     "on_failure": "retry",
                     "max_attempts": 2,

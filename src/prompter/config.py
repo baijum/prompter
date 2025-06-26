@@ -4,6 +4,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from .constants import DEFAULT_CHECK_INTERVAL
 from .logging import get_logger
 
 # Reserved action words that cannot be used as task names
@@ -40,7 +41,9 @@ class PrompterConfig:
 
         # Parse settings
         settings = self._config.get("settings", {})
-        self.check_interval: int = settings.get("check_interval", 3600)
+        self.check_interval: int = settings.get(
+            "check_interval", DEFAULT_CHECK_INTERVAL
+        )
         self.max_retries: int = settings.get("max_retries", 3)
         self.working_directory: str | None = settings.get("working_directory")
         self.allow_infinite_loops: bool = settings.get("allow_infinite_loops", False)

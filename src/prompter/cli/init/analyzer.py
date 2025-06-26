@@ -31,7 +31,7 @@ class AnalysisResult:
 class ProjectAnalyzer:
     """Analyzes projects using Claude Code SDK."""
 
-    def __init__(self, project_path: Path):
+    def __init__(self, project_path: Path) -> None:
         self.project_path = project_path
         # Temporarily use a minimal system prompt to avoid SDK issues
         self.system_prompt = "You are an AI assistant analyzing a software project."

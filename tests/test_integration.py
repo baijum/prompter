@@ -107,8 +107,17 @@ max_attempts = 1
         config = PrompterConfig(complete_config_file)
         runner = TaskRunner(config)
 
-        # Execute all tasks
-        results = runner.run_all_tasks()
+        # Execute all tasks (simulating CLI behavior)
+        results = []
+        for task in config.tasks:
+            result = runner.run_task(task)
+            results.append(result)
+
+            # Stop if on_success is 'stop' or task failed and on_failure is 'stop'
+            if (result.success and task.on_success == "stop") or (
+                not result.success and task.on_failure == "stop"
+            ):
+                break
 
         assert len(results) == 2
         assert all(result.success for result in results)
@@ -283,7 +292,16 @@ verify_command = "echo success"
         # Execute
         config = PrompterConfig(config_file)
         runner = TaskRunner(config)
-        results = runner.run_all_tasks()
+
+        # Execute tasks (simulating CLI behavior)
+        results = []
+        for task in config.tasks:
+            result = runner.run_task(task)
+            results.append(result)
+
+            # Stop if on_failure is 'stop' and task failed
+            if not result.success and task.on_failure == "stop":
+                break
 
         # Should only have one result (first task)
         assert len(results) == 1

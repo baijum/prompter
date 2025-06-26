@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import Any
 
+from prompter.constants import DEFAULT_TASK_TIMEOUT
 from prompter.utils.console import Console
 
 from .analyzer import AnalysisResult
@@ -15,7 +16,7 @@ class TaskConfig:
     name: str
     prompt: str
     verify_command: str
-    timeout: int = 300
+    timeout: int = DEFAULT_TASK_TIMEOUT
     on_success: str = "next"
     on_failure: str = "retry"
     max_attempts: int = 3
@@ -36,7 +37,7 @@ class TaskConfig:
 class InteractiveConfigurator:
     """Handles interactive configuration customization."""
 
-    def __init__(self, console: Console):
+    def __init__(self, console: Console) -> None:
         self.console = console
 
     def customize(
@@ -130,7 +131,9 @@ class InteractiveConfigurator:
             self.console.print_subsection(f"\n{i}. {task['name']}")
             self.console.print_info(f"   Prompt: {task['prompt'][:80]}...")
             self.console.print_info(f"   Verify: {task['verify_command']}")
-            self.console.print_info(f"   Timeout: {task.get('timeout', 300)}s")
+            self.console.print_info(
+                f"   Timeout: {task.get('timeout', DEFAULT_TASK_TIMEOUT)}s"
+            )
 
             action = self.console.get_input(
                 "   Action [keep/edit/delete/skip]: "
@@ -164,9 +167,13 @@ class InteractiveConfigurator:
         )
 
         timeout_str = self.console.get_input(
-            f"   Timeout in seconds [{task.get('timeout', 300)}]: "
+            f"   Timeout in seconds [{task.get('timeout', DEFAULT_TASK_TIMEOUT)}]: "
         )
-        timeout = int(timeout_str) if timeout_str else task.get("timeout", 300)
+        timeout = (
+            int(timeout_str)
+            if timeout_str
+            else task.get("timeout", DEFAULT_TASK_TIMEOUT)
+        )
 
         on_success = self.console.get_input(
             f"   On success [next/stop/repeat] [{task.get('on_success', 'next')}]: "
@@ -220,8 +227,10 @@ class InteractiveConfigurator:
                 continue
 
             # Optional fields with defaults
-            timeout_str = self.console.get_input("  Timeout in seconds [300]: ")
-            timeout = int(timeout_str) if timeout_str else 300
+            timeout_str = self.console.get_input(
+                f"  Timeout in seconds [{DEFAULT_TASK_TIMEOUT}]: "
+            )
+            timeout = int(timeout_str) if timeout_str else DEFAULT_TASK_TIMEOUT
 
             on_success = (
                 self.console.get_input("  On success [next/stop/repeat] [next]: ")

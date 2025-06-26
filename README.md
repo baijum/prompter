@@ -1,8 +1,9 @@
-```
->  ───  • • •  ───  ✓
-```
+<div align="center">
+
+![Prompter Logo](https://raw.githubusercontent.com/baijum/prompter/main/artifacts/logo-simple.svg)
 
 # Prompter
+
 > **Orchestrate AI-powered code maintenance at scale**
 
 A Python tool for running prompts sequentially to tidy large code bases using Claude Code SDK.
@@ -10,6 +11,8 @@ A Python tool for running prompts sequentially to tidy large code bases using Cl
 [![PyPI version](https://badge.fury.io/py/claude-code-prompter.svg)](https://badge.fury.io/py/claude-code-prompter)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+</div>
 
 > **📚 Resources**: [GitHub Repository](https://github.com/baijum/prompter) | [Examples](https://github.com/baijum/prompter/tree/main/examples) | [System Prompt](https://github.com/baijum/prompter/blob/main/PROMPTER_SYSTEM_PROMPT.md)
 

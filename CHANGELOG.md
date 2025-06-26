@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2025-06-26
+
+### ✨ New Features
+
+- **Added `--version` CLI flag**
+  - Users can now check the installed version with `prompter --version`
+  - The `__version__` variable in `__init__.py` now has a practical purpose
+
+### 🔧 Developer Experience
+
+- **Version synchronization enforcement**
+  - Added automated script to check version consistency between `pyproject.toml` and `__init__.py`
+  - Version sync check integrated into GitHub Actions CI/CD pipelines
+  - Pre-commit hook ensures versions stay synchronized during development
+
+- **Pre-commit hooks setup**
+  - Added comprehensive pre-commit configuration for code quality
+  - Includes ruff linting/formatting, YAML/TOML validation, trailing whitespace removal
+  - Added `pre-commit` to dev dependencies for easy setup
+
+### 📚 Documentation
+
+- **Enhanced developer documentation**
+  - Added CI/CD pipeline details to CONTRIBUTING.md
+  - Documented pre-commit setup and usage
+  - Moved development-related content from README.md to CONTRIBUTING.md
+
+### 🐛 Bug Fixes
+
+- **Fixed subprocess security warning**
+  - Added S603 to ruff ignore list for legitimate subprocess usage from config files
+  - Commands from TOML configs are properly sanitized with `shlex.split()`
+
 ## [0.7.4] - 2025-06-26
 
 ### 🐛 Bug Fixes

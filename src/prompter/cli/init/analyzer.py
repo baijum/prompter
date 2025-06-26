@@ -7,8 +7,6 @@ from pathlib import Path
 
 from claude_code_sdk import ClaudeCodeOptions, query
 
-from prompter.utils.resource_loader import get_system_prompt
-
 
 @dataclass
 class AnalysisResult:
@@ -35,90 +33,106 @@ class ProjectAnalyzer:
 
     def __init__(self, project_path: Path):
         self.project_path = project_path
-        self.system_prompt = get_system_prompt()
+        # Temporarily use a minimal system prompt to avoid SDK issues
+        self.system_prompt = "You are an AI assistant analyzing a software project."
 
     async def analyze_with_timeout(self, timeout: int = 30) -> AnalysisResult:
         """Analyze project with timeout."""
         try:
             return await asyncio.wait_for(self.analyze(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise TimeoutError(f"Analysis timed out after {timeout} seconds")
         except Exception as e:
             # Handle any other exceptions that might occur during analysis
-            raise RuntimeError(f"Analysis failed: {str(e)}") from e
+            raise RuntimeError(f"Analysis failed: {e!s}") from e
 
     async def analyze(self) -> AnalysisResult:
         """Perform comprehensive project analysis."""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.debug(f"Starting analysis for project at: {self.project_path}")
         analysis_prompt = self._build_analysis_prompt()
 
         options = ClaudeCodeOptions(
-            cwd=str(self.project_path), permission_mode="bypassPermissions"
+            cwd=str(self.project_path),
+            permission_mode="bypassPermissions"
         )
 
         # Collect analysis results
         response_text = ""
         try:
+            logger.debug("Calling Claude SDK query...")
+            message_count = 0
             async for message in query(prompt=analysis_prompt, options=options):
+                message_count += 1
+                logger.debug(f"Received message {message_count}: {type(message).__name__}")
                 if hasattr(message, "content"):
                     for content in message.content:
                         if hasattr(content, "text"):
                             response_text += content.text
+                            logger.debug(f"  Added text: {content.text[:100]}...")
+            logger.debug(f"Query completed. Total messages: {message_count}")
         except Exception as e:
             # If the Claude SDK query fails, provide a helpful error message
+            logger.exception(f"Claude SDK query failed: {type(e).__name__}")
             error_msg = str(e)
             if "TaskGroup" in error_msg:
-                raise RuntimeError(
+                error_message = (
                     "Claude Code SDK encountered an internal error. "
                     "Please ensure Claude Code is properly installed and running."
-                ) from e
-            else:
-                raise RuntimeError(f"Failed to query Claude Code SDK: {error_msg}") from e
+                )
+                raise RuntimeError(error_message) from e
+            raise RuntimeError(f"Failed to query Claude Code SDK: {error_msg}") from e
 
         # Parse results
+        logger.debug(f"Response text length: {len(response_text)}")
+        logger.debug(f"Response text: {response_text}")
         return self._parse_analysis_response(response_text)
 
     def _build_analysis_prompt(self) -> str:
         """Build the analysis prompt."""
-        return f"""
-{self.system_prompt}
+        # Get key files to help with analysis
+        key_files = self._get_key_project_files()
 
-Analyze this project directory comprehensively. Your response must be a valid JSON object with this exact structure:
+        return f"""IMPORTANT: Respond with ONLY a JSON object, no other text.
 
+Key files in this project:
+{key_files}
+
+Analyze and return JSON:
 {{
-    "language": "primary language (e.g., Python, JavaScript, Rust)",
-    "build_system": "build tool name (e.g., make, npm, cargo)",
-    "build_command": "exact command to build project",
-    "test_framework": "test framework name",
-    "test_command": "exact command to run tests",
-    "linter": "linter tool name",
-    "lint_command": "exact command to run linter",
-    "formatter": "code formatter name",
-    "format_command": "exact command to format code",
-    "documentation_tool": "docs tool name",
-    "doc_command": "exact command to build docs",
-    "issues": [
-        "list of identified issues or areas for improvement"
-    ],
-    "suggestions": [
-        {{
-            "name": "task name",
-            "prompt": "specific prompt for this task",
-            "verify_command": "command to verify task completion"
-        }}
-    ],
-    "custom_commands": {{
-        "command_name": "command_value"
-    }}
-}}
+    "language": "detected language",
+    "build_command": "build command",
+    "test_framework": "test framework",
+    "test_command": "test command",
+    "linter": "linter name",
+    "lint_command": "lint command",
+    "suggestions": [{{"name": "task", "prompt": "description", "verify_command": "command"}}]
+}}"""
 
-Important:
-1. Only include fields where you find actual evidence
-2. Commands should be exactly as they would be run
-3. Suggestions should be specific to this project
-4. Focus on actionable improvements
+    def _get_key_project_files(self) -> str:
+        """Get list of key project files for analysis."""
+        key_files = []
 
-Start your analysis now. Return ONLY the JSON object, no other text.
-"""
+        # Look for common project files
+        patterns = [
+            "package.json", "pyproject.toml", "setup.py", "setup.cfg",
+            "Cargo.toml", "go.mod", "pom.xml", "build.gradle",
+            "Makefile", "CMakeLists.txt", ".gitignore", "README*"
+        ]
+
+        for pattern in patterns:
+            for file in self.project_path.glob(pattern):
+                if file.is_file():
+                    key_files.append(f"- {file.name}")
+
+        # Check for test directories
+        for test_dir in ["tests", "test", "spec", "__tests__"]:
+            if (self.project_path / test_dir).is_dir():
+                key_files.append(f"- {test_dir}/ (directory)")
+
+        return "\n".join(key_files[:10])  # Limit to 10 files
 
     def _parse_analysis_response(self, response: str) -> AnalysisResult:
         """Parse AI response into AnalysisResult."""

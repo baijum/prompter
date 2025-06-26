@@ -105,17 +105,13 @@ class ConfigGenerator:
 
         # Run async analysis with timeout
         timeout = int(os.environ.get("PROMPTER_INIT_TIMEOUT", "120"))
-        
-        # Create a new event loop to avoid potential conflicts
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+
         try:
-            analysis = loop.run_until_complete(analyzer.analyze_with_timeout(timeout=timeout))
+            # Use asyncio.run() which properly sets up the event loop
+            analysis = asyncio.run(analyzer.analyze_with_timeout(timeout=timeout))
         except TimeoutError as e:
             msg = f"Analysis timed out after {timeout} seconds. Please try again.\nYou can increase the timeout by setting PROMPTER_INIT_TIMEOUT environment variable."
             raise TimeoutError(msg) from e
-        finally:
-            loop.close()
 
         # Display results
         self._display_analysis_results(analysis)

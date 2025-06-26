@@ -1,0 +1,123 @@
+# Example: Task Jumping and Conditional Workflows
+#
+# This example demonstrates how to use task names in on_success and on_failure
+# to create complex conditional workflows.
+#
+# ⚠️ IMPORTANT: Avoid creating infinite loops! While Prompter has built-in 
+# loop protection, always ensure your workflows have clear exit conditions.
+# Each task should have a path that eventually leads to "stop" or the end
+# of the task list.
+
+[settings]
+# Optional: Set a working directory for all tasks
+# working_directory = "/path/to/project"
+
+# Build -> Test -> Deploy workflow with error handling
+[[tasks]]
+name = "check_dependencies"
+prompt = "Check if all required dependencies are installed and up to date"
+verify_command = "npm list --depth=0"
+on_success = "build"
+on_failure = "install_dependencies"
+
+[[tasks]]
+name = "install_dependencies"
+prompt = "Install missing dependencies"
+verify_command = "npm install && npm list --depth=0"
+on_success = "build"
+on_failure = "stop"  # Can't proceed without dependencies
+
+[[tasks]]
+name = "build"
+prompt = "Build the project for production"
+verify_command = "test -f dist/main.js"
+on_success = "run_tests"
+on_failure = "fix_build_errors"
+
+[[tasks]]
+name = "fix_build_errors"
+prompt = "Analyze and fix any build errors"
+verify_command = "test -f dist/main.js"
+on_success = "run_tests"  # Try tests after fixing build
+on_failure = "stop"       # Stop if we can't fix the build
+max_attempts = 2
+
+[[tasks]]
+name = "run_tests"
+prompt = "Run the complete test suite"
+verify_command = "npm test -- --json --outputFile=test-results.json"
+on_success = "check_coverage"
+on_failure = "fix_failing_tests"
+
+[[tasks]]
+name = "fix_failing_tests"
+prompt = "Fix any failing tests"
+verify_command = "npm test"
+on_success = "check_coverage"  # Continue to coverage check
+on_failure = "stop"           # Stop if tests can't be fixed
+max_attempts = 1
+
+[[tasks]]
+name = "check_coverage"
+prompt = "Check test coverage meets minimum requirements"
+verify_command = "npm run coverage -- --check-coverage --lines 80"
+on_success = "deploy_staging"
+on_failure = "improve_coverage"
+
+[[tasks]]
+name = "improve_coverage"
+prompt = "Add tests to improve code coverage to at least 80%"
+verify_command = "npm run coverage -- --check-coverage --lines 80"
+on_success = "deploy_staging"
+on_failure = "next"  # Continue anyway, but log the issue
+
+[[tasks]]
+name = "deploy_staging"
+prompt = "Deploy the application to staging environment"
+verify_command = "curl -f http://staging.example.com/health"
+on_success = "run_smoke_tests"
+on_failure = "rollback_staging"
+timeout = 300  # 5 minute timeout for deployment
+
+[[tasks]]
+name = "run_smoke_tests"
+prompt = "Run smoke tests against staging environment"
+verify_command = "npm run test:e2e -- --env=staging"
+on_success = "deploy_production"
+on_failure = "rollback_staging"
+
+[[tasks]]
+name = "rollback_staging"
+prompt = "Rollback staging deployment to previous version"
+verify_command = "curl -f http://staging.example.com/health"
+on_success = "stop"  # Successfully rolled back
+on_failure = "stop"  # Manual intervention needed
+
+[[tasks]]
+name = "deploy_production"
+prompt = "Deploy the application to production with zero-downtime deployment"
+verify_command = "curl -f http://production.example.com/health"
+on_success = "verify_production"
+on_failure = "rollback_production"
+timeout = 600  # 10 minute timeout for production deployment
+
+[[tasks]]
+name = "verify_production"
+prompt = "Verify production deployment with health checks and monitoring"
+verify_command = "npm run test:production"
+on_success = "stop"  # Success! Deployment complete
+on_failure = "rollback_production"
+
+[[tasks]]
+name = "rollback_production"
+prompt = "Emergency rollback of production deployment"
+verify_command = "curl -f http://production.example.com/health"
+on_success = "alert_team"
+on_failure = "alert_team"  # Alert either way
+
+[[tasks]]
+name = "alert_team"
+prompt = "Send alerts about the deployment status to the team"
+verify_command = "echo 'Alert sent'"
+on_success = "stop"
+on_failure = "stop"

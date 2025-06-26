@@ -1,5 +1,5 @@
 # BDD Workflow Automation Configuration
-# This configuration breaks down the BDD development workflow into sequential tasks
+# This configuration breaks down the BDD development workflow into manageable tasks
 # to avoid JSON parsing issues with large responses in Claude SDK
 
 [settings]

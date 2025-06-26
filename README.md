@@ -6,7 +6,7 @@
 
 > **Orchestrate AI-powered code maintenance at scale**
 
-A Python tool for running prompts sequentially to tidy large code bases using Claude Code SDK.
+A Python tool for orchestrating AI-powered code maintenance workflows using Claude Code SDK.
 
 [![PyPI version](https://badge.fury.io/py/claude-code-prompter.svg)](https://badge.fury.io/py/claude-code-prompter)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -38,6 +38,44 @@ pip install -e .
 # Install with development dependencies
 pip install -e ".[dev]"
 ```
+
+## How It Works
+
+Prompter supports two execution modes:
+
+### 1. Sequential Execution (Default)
+Tasks execute one after another in the order they're defined. Use `on_success = "next"` and `on_failure = "retry"` for traditional sequential workflows.
+
+```toml
+[[tasks]]
+name = "lint"
+on_success = "next"  # Continue to the next task in order
+
+[[tasks]]
+name = "test"
+on_success = "next"  # Continue to the next task
+
+[[tasks]]
+name = "build"
+on_success = "stop"  # End execution
+```
+
+### 2. Conditional Workflows (Task Jumping)
+Tasks can jump to specific named tasks, enabling complex branching logic. Perfect for error handling, conditional deployments, and dynamic workflows.
+
+```toml
+[[tasks]]
+name = "build"
+on_success = "test"      # Jump to 'test' task
+on_failure = "fix_build" # Jump to 'fix_build' on failure
+
+[[tasks]]
+name = "fix_build"
+on_success = "build"     # Retry build after fixing
+```
+
+> ⚠️ **Warning: Infinite Loop Protection**  
+> When using task jumping, be careful not to create infinite loops. Prompter automatically detects and prevents infinite loops by tracking executed tasks. If a task tries to execute twice in the same run, it will be skipped with a warning. Always ensure your task flows have a clear termination condition.
 
 ## Quick Start
 
@@ -228,6 +266,110 @@ verify_command = "security-scan --full"
 # No timeout specified - Claude Code runs without time limit
 ```
 
+#### Task Jumping and Conditional Workflows
+```toml
+# Jump to specific tasks based on success/failure
+[[tasks]]
+name = "build"
+prompt = "Build the project"
+verify_command = "test -f dist/app.js"
+on_success = "test"      # Jump to 'test' task on success
+on_failure = "fix_build" # Jump to 'fix_build' task on failure
+
+[[tasks]]
+name = "fix_build"
+prompt = "Fix build errors and warnings"
+verify_command = "test -f dist/app.js"
+on_success = "test"  # Jump back to 'test' after fixing
+on_failure = "stop"  # Stop if we can't fix the build
+max_attempts = 2
+
+[[tasks]]
+name = "test"
+prompt = "Run the test suite"
+verify_command = "npm test"
+on_success = "deploy"    # Continue to deploy
+on_failure = "fix_tests" # Jump to fix_tests on failure
+
+[[tasks]]
+name = "fix_tests"
+prompt = "Fix failing tests"
+verify_command = "npm test"
+on_success = "deploy"    # Continue to deploy after fixing
+on_failure = "stop"      # Stop if tests can't be fixed
+max_attempts = 1
+
+[[tasks]]
+name = "deploy"
+prompt = "Deploy to staging environment"
+verify_command = "curl -f http://staging.example.com/health"
+on_success = "stop"      # All done!
+on_failure = "rollback"  # Jump to rollback on failure
+
+[[tasks]]
+name = "rollback"
+prompt = "Rollback the deployment"
+verify_command = "curl -f http://staging.example.com/health"
+on_success = "stop"
+on_failure = "stop"
+```
+
+This creates a workflow where:
+- Build failures jump to a fix task, then retry testing
+- Test failures jump to a fix task, then continue to deployment
+- Deployment failures trigger a rollback
+- Tasks are skipped if not referenced in the flow
+
+#### ⚠️ Avoiding Infinite Loops
+
+When designing conditional workflows, be mindful of potential infinite loops:
+
+**Bad Example (Infinite Loop):**
+```toml
+[[tasks]]
+name = "task_a"
+on_success = "task_b"
+
+[[tasks]]
+name = "task_b"
+on_success = "task_a"  # Creates infinite loop!
+```
+
+**Good Example (With Exit Condition):**
+```toml
+[[tasks]]
+name = "retry_task"
+prompt = "Try to fix the issue"
+verify_command = "test -f success_marker"
+on_success = "next"       # Exit the loop on success
+on_failure = "retry_task" # Retry on failure
+max_attempts = 1          # Important: limits retries per execution
+```
+
+**Loop Protection:** By default, Prompter prevents infinite loops by tracking which tasks have been executed. If a task attempts to run twice in the same session, it will be skipped with a warning log. 
+
+**Allowing Infinite Loops:** For use cases like continuous monitoring or polling, you can enable infinite loops:
+
+```toml
+[settings]
+allow_infinite_loops = true
+
+[[tasks]]
+name = "monitor"
+prompt = "Check system status"
+verify_command = "systemctl is-active myservice"
+on_success = "wait"
+on_failure = "alert"
+
+[[tasks]]
+name = "wait"
+prompt = "Wait before next check"
+verify_command = "sleep 60"
+on_success = "monitor"  # Loop back to monitoring
+```
+
+When `allow_infinite_loops = true`, tasks can execute multiple times. A safety limit of 1000 iterations prevents runaway loops.
+
 #### Multiple Project Workflow
 ```bash
 # Process multiple projects in sequence
@@ -265,16 +407,19 @@ timeout = 300
 - `working_directory`: Base directory for command execution (default: current directory)
 - `check_interval`: Seconds to wait between task completion and verification (default: 3600)
 - `max_retries`: Global retry limit for all tasks (default: 3)
+- `allow_infinite_loops`: Allow tasks to execute multiple times in the same run (default: false)
 
 #### Task Fields
-- `name` (required): Unique identifier for the task
+- `name` (required): Unique identifier for the task. Cannot use reserved words: `next`, `stop`, `retry`, `repeat`
 - `prompt` (required): Instructions for Claude Code to execute
 - `verify_command` (required): Shell command to verify task success
 - `verify_success_code`: Expected exit code for success (default: 0)
-- `on_success`: Action when task succeeds - `"next"`, `"stop"`, or `"repeat"` (default: "next")
-- `on_failure`: Action when task fails - `"retry"`, `"stop"`, or `"next"` (default: "retry")
+- `on_success`: Action when task succeeds - `"next"`, `"stop"`, `"repeat"`, or any task name (default: "next")
+- `on_failure`: Action when task fails - `"retry"`, `"stop"`, `"next"`, or any task name (default: "retry")
 - `max_attempts`: Maximum retry attempts for this task (default: 3)
 - `timeout`: Task timeout in seconds (optional, no timeout if not specified)
+
+> **Note on Task Jumping:** When using task names in `on_success` or `on_failure`, ensure your workflow has exit conditions to prevent infinite loops. Prompter will skip tasks that have already executed to prevent infinite loops.
 
 ## Examples and Templates
 

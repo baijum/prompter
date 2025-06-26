@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Prompter** is a Python-based tool designed to run prompts sequentially to tidy large code bases using Claude Code. The project is currently in its initial setup phase.
+**Prompter** is a Python-based tool for orchestrating AI-powered code maintenance workflows using Claude Code. It supports both sequential task execution and conditional workflows with task jumping.
 
 ## Development Environment Setup
 

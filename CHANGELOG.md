@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2025-01-26
 
+### 🚀 New Features
+
+- **Task Jumping and Conditional Workflows**
+  - Tasks can now jump to specific tasks by name in `on_success` and `on_failure`
+  - Reserved action words (`next`, `stop`, `retry`, `repeat`) cannot be used as task names
+  - Enables complex conditional workflows and error handling paths
+  - Built-in infinite loop protection: tasks are automatically skipped if they attempt to execute twice
+  - New `allow_infinite_loops` setting to explicitly allow loops for monitoring/polling use cases
+  - Safety limit of 1000 iterations even when infinite loops are allowed
+  - Example: `on_success = "deploy"` jumps to the "deploy" task
+
 ### 🚀 Improvements
 
 - **Enhanced TOML parsing error messages**
@@ -18,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation
 
 - Added troubleshooting entry for TOML backslash escaping errors in README.md
+- Added examples of task jumping and conditional workflows
+- Updated configuration reference to document task name restrictions
 
 ## [0.4.4] - 2025-06-26
 

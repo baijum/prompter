@@ -6,6 +6,11 @@ from typing import Any
 
 from .logging import get_logger
 
+# Reserved action words that cannot be used as task names
+RESERVED_ACTIONS = {"next", "stop", "retry", "repeat"}
+ON_SUCCESS_ACTIONS = {"next", "stop", "repeat"}
+ON_FAILURE_ACTIONS = {"retry", "stop", "next"}
+
 
 class TaskConfig:
     """Configuration for a single task."""
@@ -38,10 +43,12 @@ class PrompterConfig:
         self.check_interval: int = settings.get("check_interval", 3600)
         self.max_retries: int = settings.get("max_retries", 3)
         self.working_directory: str | None = settings.get("working_directory")
+        self.allow_infinite_loops: bool = settings.get("allow_infinite_loops", False)
 
         self.logger.debug(
             f"Configuration settings: check_interval={self.check_interval}s, "
-            f"max_retries={self.max_retries}, working_directory={self.working_directory}"
+            f"max_retries={self.max_retries}, working_directory={self.working_directory}, "
+            f"allow_infinite_loops={self.allow_infinite_loops}"
         )
 
         # Parse tasks
@@ -140,24 +147,40 @@ class PrompterConfig:
             errors.append("No tasks defined in configuration")
             self.logger.debug("Validation error: No tasks defined")
 
+        # Get all task names for validation
+        task_names = {task.name for task in self.tasks if task.name}
+
         for i, task in enumerate(self.tasks):
             task_errors = []
             if not task.name:
                 task_errors.append(f"Task {i}: name is required")
+            elif task.name in RESERVED_ACTIONS:
+                task_errors.append(
+                    f"Task {i}: name '{task.name}' is a reserved word and cannot be used as a task name. "
+                    f"Reserved words are: {', '.join(sorted(RESERVED_ACTIONS))}"
+                )
+            
             if not task.prompt:
                 task_errors.append(f"Task {i} ({task.name}): prompt is required")
             if not task.verify_command:
                 task_errors.append(
                     f"Task {i} ({task.name}): verify_command is required"
                 )
-            if task.on_success not in ["next", "stop", "repeat"]:
+            
+            # Validate on_success - can be either a reserved action or a task name
+            if task.on_success not in ON_SUCCESS_ACTIONS and task.on_success not in task_names:
                 task_errors.append(
-                    f"Task {i} ({task.name}): on_success must be 'next', 'stop', or 'repeat'"
+                    f"Task {i} ({task.name}): on_success '{task.on_success}' must be one of "
+                    f"{', '.join(sorted(ON_SUCCESS_ACTIONS))} or a valid task name"
                 )
-            if task.on_failure not in ["retry", "stop", "next"]:
+            
+            # Validate on_failure - can be either a reserved action or a task name
+            if task.on_failure not in ON_FAILURE_ACTIONS and task.on_failure not in task_names:
                 task_errors.append(
-                    f"Task {i} ({task.name}): on_failure must be 'retry', 'stop', or 'next'"
+                    f"Task {i} ({task.name}): on_failure '{task.on_failure}' must be one of "
+                    f"{', '.join(sorted(ON_FAILURE_ACTIONS))} or a valid task name"
                 )
+            
             if task.max_attempts < 1:
                 task_errors.append(f"Task {i} ({task.name}): max_attempts must be >= 1")
 

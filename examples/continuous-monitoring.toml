@@ -1,0 +1,93 @@
+# Example: Continuous Monitoring with Intentional Loops
+#
+# This example shows how to use allow_infinite_loops for continuous monitoring.
+# The workflow will run indefinitely, checking system health and taking action as needed.
+
+[settings]
+# Enable infinite loops for continuous operation
+allow_infinite_loops = true
+working_directory = "."
+
+# Continuous monitoring workflow
+[[tasks]]
+name = "check_services"
+prompt = "Check if all critical services are running"
+verify_command = "systemctl is-active nginx postgresql redis"
+on_success = "check_disk_space"
+on_failure = "restart_services"
+
+[[tasks]]
+name = "restart_services"
+prompt = "Restart any failed services"
+verify_command = "systemctl restart nginx postgresql redis && sleep 5 && systemctl is-active nginx postgresql redis"
+on_success = "notify_recovery"
+on_failure = "escalate_alert"
+max_attempts = 2
+
+[[tasks]]
+name = "notify_recovery"
+prompt = "Send recovery notification"
+verify_command = "echo 'Services recovered' | mail -s 'Recovery' admin@example.com"
+on_success = "check_disk_space"
+
+[[tasks]]
+name = "escalate_alert"
+prompt = "Escalate critical service failure"
+verify_command = "echo 'CRITICAL: Services down' | mail -s 'URGENT' oncall@example.com"
+on_success = "wait_for_manual_intervention"
+
+[[tasks]]
+name = "wait_for_manual_intervention"
+prompt = "Wait for manual intervention"
+verify_command = "sleep 300"  # Wait 5 minutes
+on_success = "check_services"  # Try again
+
+[[tasks]]
+name = "check_disk_space"
+prompt = "Check disk space on all partitions"
+verify_command = "df -h | awk '$5+0 > 90 {exit 1}'"  # Fail if any partition >90%
+on_success = "check_memory"
+on_failure = "cleanup_disk"
+
+[[tasks]]
+name = "cleanup_disk"
+prompt = "Clean up old logs and temporary files"
+verify_command = "find /var/log -name '*.old' -delete && find /tmp -mtime +7 -delete"
+on_success = "check_memory"
+
+[[tasks]]
+name = "check_memory"
+prompt = "Check system memory usage"
+verify_command = "free -m | awk 'NR==2{if($3/$2 > 0.9) exit 1}'"  # Fail if >90% used
+on_success = "check_load"
+on_failure = "clear_caches"
+
+[[tasks]]
+name = "clear_caches"
+prompt = "Clear system caches"
+verify_command = "sync && echo 3 > /proc/sys/vm/drop_caches"
+on_success = "check_load"
+
+[[tasks]]
+name = "check_load"
+prompt = "Check system load average"
+verify_command = "uptime | awk '{load=substr($NF,1,length($NF)-1); if(load > 4) exit 1}'"
+on_success = "wait_and_repeat"
+on_failure = "investigate_high_load"
+
+[[tasks]]
+name = "investigate_high_load"
+prompt = "Investigate and log high load causes"
+verify_command = "top -bn1 | head -20 > /var/log/high_load_$(date +%Y%m%d_%H%M%S).log"
+on_success = "wait_and_repeat"
+
+[[tasks]]
+name = "wait_and_repeat"
+prompt = "Wait before next monitoring cycle"
+verify_command = "sleep 60"  # Wait 1 minute
+on_success = "check_services"  # Loop back to start
+
+# Note: This workflow will run indefinitely. To stop it:
+# - Use Ctrl+C to interrupt
+# - Or set up a "stop" condition based on a file existence check
+# - Or reach the safety limit of 1000 iterations (about 16 hours with 1-minute waits)

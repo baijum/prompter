@@ -77,6 +77,99 @@ on_success = "build"     # Retry build after fixing
 > ⚠️ **Warning: Infinite Loop Protection**
 > When using task jumping, be careful not to create infinite loops. Prompter automatically detects and prevents infinite loops by tracking executed tasks. If a task tries to execute twice in the same run, it will be skipped with a warning. Always ensure your task flows have a clear termination condition.
 
+### 3. Session Resumption (Context Preservation)
+Tasks can resume from previous Claude sessions, maintaining full context across multiple steps. This is essential for complex workflows where later tasks need to understand what was done in earlier tasks.
+
+```toml
+[[tasks]]
+name = "analyze_codebase"
+prompt = "Analyze this Python codebase and identify the main components and their relationships."
+verify_command = "echo 'Analysis complete'"
+on_success = "next"
+
+[[tasks]]
+name = "suggest_improvements"
+prompt = "Based on your analysis, suggest specific improvements to the code architecture."
+verify_command = "echo 'Suggestions complete'"
+resume_previous_session = true  # Resume from analyze_codebase's session
+on_success = "next"
+
+[[tasks]]
+name = "implement_refactoring"
+prompt = "Let's implement the first improvement you suggested. Start with refactoring the most critical component."
+verify_command = "python -m pytest tests/"
+resume_previous_session = true  # Continues with full context from previous tasks
+on_success = "stop"
+```
+
+#### How Session Resumption Works
+
+When `resume_previous_session = true`:
+1. Prompter looks for the most recent task execution (regardless of success/failure)
+2. Retrieves that task's Claude session ID from the state file
+3. Passes it to Claude SDK, which restores the full conversation history
+4. Claude has complete context of previous work, decisions, and code understanding
+
+#### Use Cases for Session Resumption
+
+**Multi-Step Analysis and Implementation:**
+```toml
+[[tasks]]
+name = "security_audit"
+prompt = "Perform a security audit of this codebase. List all potential vulnerabilities."
+verify_command = "echo 'Audit complete'"
+
+[[tasks]]
+name = "fix_critical_issues"
+prompt = "Fix the critical security issues you identified, starting with the most severe."
+verify_command = "safety check"
+resume_previous_session = true  # Knows exactly which issues to fix
+```
+
+**Incremental Refactoring:**
+```toml
+[[tasks]]
+name = "identify_code_smells"
+prompt = "Identify code smells and technical debt in this codebase."
+verify_command = "echo 'Analysis complete'"
+
+[[tasks]]
+name = "refactor_step_1"
+prompt = "Refactor the first code smell you identified."
+verify_command = "python -m pytest"
+resume_previous_session = true
+
+[[tasks]]
+name = "refactor_step_2"
+prompt = "Now refactor the second code smell."
+verify_command = "python -m pytest"
+resume_previous_session = true  # Maintains context of all previous refactoring
+```
+
+**Error Recovery with Context:**
+```toml
+[[tasks]]
+name = "complex_migration"
+prompt = "Migrate the database schema from v1 to v2."
+verify_command = "python manage.py migrate --check"
+on_failure = "fix_migration"
+
+[[tasks]]
+name = "fix_migration"
+prompt = "The migration failed. Fix the issues based on the error output."
+verify_command = "python manage.py migrate --check"
+resume_previous_session = true  # Understands what was attempted and why it failed
+```
+
+#### Best Practices
+
+1. **Use for Related Tasks**: Resume sessions when tasks are logically connected and need shared context
+2. **Not for Independent Tasks**: Don't resume sessions for unrelated tasks that should start fresh
+3. **Combine with Task Jumping**: Powerful when combined with conditional workflows
+4. **Debug with Logs**: Enable verbose mode to see which session is being resumed
+
+> 💡 **Pro Tip**: Session resumption is particularly powerful for complex, multi-step workflows where Claude needs to maintain understanding of your codebase architecture, previous decisions, and implementation details across tasks.
+
 ## AI-Powered Project Analysis (New in v0.7.0)
 
 Prompter can now analyze your project using Claude and automatically generate a customized configuration file tailored to your specific codebase.
@@ -318,6 +411,13 @@ name = "thorough_analysis"
 prompt = "Perform comprehensive security audit"
 verify_command = "security-scan --full"
 # No timeout specified - Claude Code runs without time limit
+
+# Task with session resumption
+[[tasks]]
+name = "continue_work"
+prompt = "Continue implementing the changes we discussed"
+verify_command = "python -m pytest"
+resume_previous_session = true  # Resume from previous task's Claude session
 ```
 
 #### Task Jumping and Conditional Workflows

@@ -269,7 +269,7 @@ def execute_single_task(
 
     # Execute the task
     logger.debug(f"Executing task {task.name}")
-    result = runner.run_task(task)
+    result = runner.run_task(task, state_manager)
 
     # Update state
     logger.debug(f"Updating state for task {task.name}: success={result.success}")

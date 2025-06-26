@@ -27,6 +27,7 @@ class TestTaskConfig:
         assert task.on_failure == "retry"  # default
         assert task.max_attempts == 3  # default
         assert task.timeout is None  # default
+        assert task.resume_previous_session is False  # default
 
     def test_task_config_creation_with_all_fields(self):
         """Test creating TaskConfig with all fields specified."""
@@ -39,6 +40,7 @@ class TestTaskConfig:
             "on_failure": "next",
             "max_attempts": 5,
             "timeout": 600,
+            "resume_previous_session": True,
         }
 
         task = TaskConfig(config_data)
@@ -51,6 +53,7 @@ class TestTaskConfig:
         assert task.on_failure == "next"
         assert task.max_attempts == 5
         assert task.timeout == 600
+        assert task.resume_previous_session is True
 
     def test_task_config_repr(self):
         """Test TaskConfig string representation."""

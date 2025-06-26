@@ -5,6 +5,7 @@ import shlex
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 from claude_code_sdk import ClaudeCodeOptions, ResultMessage, query
 
@@ -47,13 +48,14 @@ class TaskRunner:
         )
         self.logger = get_logger("runner")
 
-    def run_task(self, task: TaskConfig) -> TaskResult:
+    def run_task(self, task: TaskConfig, state_manager: Any = None) -> TaskResult:
         """Execute a single task."""
         self.logger.info(f"Starting task: {task.name}")
         self.logger.debug(
             f"Task configuration: name={task.name}, prompt={task.prompt[:100]}..., "
             f"verify_command={task.verify_command}, max_attempts={task.max_attempts}, "
-            f"timeout={task.timeout}s, on_success={task.on_success}, on_failure={task.on_failure}"
+            f"timeout={task.timeout}s, on_success={task.on_success}, on_failure={task.on_failure}, "
+            f"resume_previous_session={task.resume_previous_session}"
         )
 
         if self.dry_run:
@@ -68,10 +70,21 @@ class TaskRunner:
                 f"Task {task.name} attempt {attempts}/{task.max_attempts}"
             )
 
+            # Check if we should resume from previous session
+            resume_session_id = None
+            if task.resume_previous_session and state_manager:
+                resume_session_id = state_manager.get_previous_session_id(task.name)
+                if resume_session_id:
+                    self.logger.info(
+                        f"Resuming from previous Claude session: {resume_session_id}"
+                    )
+                else:
+                    self.logger.info("No previous session found to resume from")
+
             # Execute the prompt with Claude Code
             self.logger.debug(f"Executing Claude prompt for task {task.name}")
             claude_start_time = time.time()
-            claude_result = self._execute_claude_prompt(task)
+            claude_result = self._execute_claude_prompt(task, resume_session_id)
             claude_duration = time.time() - claude_start_time
             self.logger.debug(
                 f"Claude execution completed in {claude_duration:.2f}s, success={claude_result[0]}"
@@ -160,12 +173,16 @@ class TaskRunner:
             verification_output=f"[DRY RUN] Would run verification: {task.verify_command}",
         )
 
-    def _execute_claude_prompt(self, task: TaskConfig) -> tuple[bool, str, str | None]:
+    def _execute_claude_prompt(
+        self, task: TaskConfig, resume_session_id: str | None = None
+    ) -> tuple[bool, str, str | None]:
         """Execute a Claude Code prompt using SDK."""
         try:
             self.logger.debug("Creating asyncio event loop for Claude SDK execution")
             # Run the async query in a synchronous context
-            result = asyncio.run(self._execute_claude_prompt_async(task))
+            result = asyncio.run(
+                self._execute_claude_prompt_async(task, resume_session_id)
+            )
             self.logger.debug(
                 f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
             )
@@ -184,7 +201,7 @@ class TaskRunner:
             return False, f"Error executing Claude SDK task: {e}", None
 
     async def _execute_claude_prompt_async(
-        self, task: TaskConfig
+        self, task: TaskConfig, resume_session_id: str | None = None
     ) -> tuple[bool, str, str | None]:
         """Execute a Claude Code prompt using SDK asynchronously."""
 
@@ -194,7 +211,11 @@ class TaskRunner:
             options = ClaudeCodeOptions(
                 cwd=str(self.current_directory),
                 permission_mode="bypassPermissions",  # Auto-accept all actions for automation
+                resume=resume_session_id,  # Resume previous session if provided
             )
+
+            if resume_session_id:
+                self.logger.debug(f"Resuming Claude session: {resume_session_id}")
 
             # Collect all messages from the query
             messages = []

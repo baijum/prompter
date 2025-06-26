@@ -319,6 +319,56 @@ class TestTaskRunner:
 
     @patch("prompter.runner.query")
     @patch("prompter.runner.subprocess.run")
+    def test_resume_previous_session(self, mock_subprocess, mock_query, mock_config):
+        """Test resuming from previous Claude session."""
+
+        # Create task with resume_previous_session flag
+        task = TaskConfig(
+            {
+                "name": "resume_task",
+                "prompt": "Continue from previous work",
+                "verify_command": "echo test",
+                "resume_previous_session": True,
+            }
+        )
+
+        # Mock state manager with previous session
+        mock_state_manager = Mock()
+        mock_state_manager.get_previous_session_id.return_value = "previous_session_123"
+
+        # Mock Claude response
+        mock_message = Mock()
+        mock_content = Mock()
+        mock_content.text = "Resumed successfully"
+        mock_message.content = [mock_content]
+
+        mock_query.return_value = self.MockAsyncIterator([mock_message])
+
+        # Mock successful verification
+        verify_result = Mock()
+        verify_result.returncode = 0
+        verify_result.stdout = "test"
+        verify_result.stderr = ""
+        mock_subprocess.return_value = verify_result
+
+        runner = TaskRunner(mock_config)
+        result = runner.run_task(task, mock_state_manager)
+
+        # Verify get_previous_session_id was called
+        mock_state_manager.get_previous_session_id.assert_called_once_with(
+            "resume_task"
+        )
+
+        # Verify query was called with resume parameter
+        mock_query.assert_called_once()
+        args, kwargs = mock_query.call_args
+        assert kwargs["options"].resume == "previous_session_123"
+
+        assert result.success is True
+        assert "Resumed successfully" in result.output
+
+    @patch("prompter.runner.query")
+    @patch("prompter.runner.subprocess.run")
     def test_verification_timeout(self, mock_subprocess, mock_query, mock_config):
         """Test verification command timeout."""
         # Create a task that stops on failure to avoid retries

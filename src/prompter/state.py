@@ -239,3 +239,24 @@ class StateManager:
             for name, state in self.task_states.items()
             if state.status == "completed"
         ]
+
+    def get_previous_session_id(self, current_task_name: str) -> str | None:
+        """Get the Claude session ID from the most recent task execution before the current one."""
+        # If no history, return None
+        if not self.results_history:
+            return None
+
+        # Find the most recent entry with a claude_session_id
+        # (regardless of success status since user might want to continue from a "failed" attempt)
+        for entry in reversed(self.results_history):
+            claude_session_id = entry.get("claude_session_id")
+            if claude_session_id and entry.get("task_name") != current_task_name:
+                # This is a different task with a session ID, return it
+                self.logger.debug(
+                    f"Found previous session from task '{entry.get('task_name')}': {claude_session_id}"
+                )
+                return str(claude_session_id)
+
+        # No previous session found
+        self.logger.debug(f"No previous session found for task '{current_task_name}'")
+        return None

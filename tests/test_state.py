@@ -471,3 +471,51 @@ class TestStateManager:
         assert len(history_entry["error"]) == 500  # Truncated to 500 chars
         assert history_entry["output"] == "A" * 500
         assert history_entry["error"] == "B" * 500
+
+    def test_get_previous_session_id(self, temp_dir):
+        """Test getting previous Claude session ID."""
+        state_file = temp_dir / "session_resume_state.json"
+        manager = StateManager(state_file)
+
+        # Case 1: No history - should return None
+        assert manager.get_previous_session_id("task1") is None
+
+        # Case 2: Add first task with session ID
+        result1 = TaskResult(
+            task_name="task1",
+            success=True,
+            output="First task",
+            session_id="session_001",
+        )
+        manager.update_task_state(result1)
+
+        # Task2 should get task1's session ID
+        assert manager.get_previous_session_id("task2") == "session_001"
+
+        # Case 3: Add task2 with its own session ID
+        result2 = TaskResult(
+            task_name="task2",
+            success=False,  # Even failed tasks can be resumed from
+            output="Second task",
+            error="Some error",
+            session_id="session_002",
+        )
+        manager.update_task_state(result2)
+
+        # Task3 should get task2's session ID (most recent)
+        assert manager.get_previous_session_id("task3") == "session_002"
+
+        # Case 4: Task with no session ID
+        result3 = TaskResult(
+            task_name="task3",
+            success=True,
+            output="Third task",
+            session_id=None,  # No session ID
+        )
+        manager.update_task_state(result3)
+
+        # Task4 should still get task2's session ID (last one with a session)
+        assert manager.get_previous_session_id("task4") == "session_002"
+
+        # Case 5: Running task1 again should not get its own previous session
+        assert manager.get_previous_session_id("task1") == "session_002"

@@ -25,6 +25,9 @@ class TaskConfig:
         self.on_failure: str = config.get("on_failure", "retry")
         self.max_attempts: int = config.get("max_attempts", 3)
         self.timeout: int | None = config.get("timeout")
+        self.resume_previous_session: bool = config.get(
+            "resume_previous_session", False
+        )
 
     def __repr__(self) -> str:
         return f"TaskConfig(name='{self.name}')"

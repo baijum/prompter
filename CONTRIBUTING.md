@@ -13,6 +13,7 @@ Thank you for your interest in contributing to Prompter! This document provides 
 - [Submitting Changes](#submitting-changes)
 - [Reporting Issues](#reporting-issues)
 - [Development Workflow](#development-workflow)
+- [Release Process](#release-process)
 
 ## Code of Conduct
 
@@ -356,24 +357,76 @@ prompter --status
 prompter/
 ├── src/prompter/          # Main package
 │   ├── __init__.py
-│   ├── cli.py             # Command-line interface
+│   ├── cli.py             # CLI wrapper (for compatibility)
+│   ├── cli/               # CLI module package
+│   │   ├── __init__.py
+│   │   ├── arguments.py   # CLI argument parsing
+│   │   ├── main.py        # Main orchestration logic
+│   │   ├── sample_config.py # Sample configuration generation
+│   │   └── status.py      # Status display functionality
 │   ├── config.py          # Configuration parsing
-│   ├── runner.py          # Task execution
+│   ├── runner.py          # Task execution with Claude SDK
 │   ├── state.py           # State management
 │   └── logging.py         # Logging setup
 ├── tests/                 # Test suite
-│   ├── test_cli.py
-│   ├── test_config.py
-│   ├── test_runner.py
-│   ├── test_state.py
-│   ├── test_integration.py
+│   ├── __init__.py
+│   ├── conftest.py        # pytest configuration
+│   ├── test_cli.py        # CLI tests
+│   ├── test_config.py     # Configuration tests
+│   ├── test_runner.py     # Runner tests
+│   ├── test_state.py      # State management tests
+│   ├── test_logging.py    # Logging tests
+│   ├── test_integration.py # End-to-end tests
 │   └── test_helpers.py    # Test utilities
-├── .github/workflows/     # CI/CD
+├── examples/              # Example configurations
+│   ├── README.md          # Examples documentation
+│   ├── bdd-workflow.toml  # BDD automation example
+│   ├── refactor-codebase.toml # Refactoring example
+│   └── security-audit.toml # Security scanning example
+├── .github/               # GitHub specific files
+│   ├── workflows/         # CI/CD pipelines
+│   │   ├── ci.yml         # Continuous integration
+│   │   └── publish.yml    # PyPI publishing
+│   └── RELEASE_TEMPLATE.md # Release checklist template
 ├── pyproject.toml         # Project configuration
 ├── README.md              # User documentation
 ├── CONTRIBUTING.md        # This file
-└── CLAUDE.md              # AI assistant instructions
+├── RELEASING.md           # Release process guide
+├── CHANGELOG.md           # Version history
+├── CLAUDE.md              # AI assistant instructions
+└── PROMPTER_SYSTEM_PROMPT.md # System prompt for AI tools
 ```
+
+## Release Process
+
+For maintainers creating a new release:
+
+1. **Follow the release guide**: See [RELEASING.md](RELEASING.md) for detailed instructions
+2. **Version bump**: Update version in `pyproject.toml`
+3. **Update CHANGELOG.md**: Document all changes
+4. **Run quality checks**: Ensure `make all` passes
+5. **Create release**: Use git tags and GitHub releases
+6. **Publish to PyPI**: Follow the publishing steps
+
+### Quick Release Commands
+
+```bash
+# Prepare release
+make all                                    # Run all checks
+git add pyproject.toml CHANGELOG.md
+git commit -m "Release v0.x.x - Description"
+git tag -a v0.x.x -m "Release v0.x.x"
+
+# Push and create GitHub release
+git push origin v0.x.x
+gh release create v0.x.x --title "..." --notes "..."
+
+# Publish to PyPI
+python -m build
+python -m twine upload dist/*
+```
+
+For the complete release process, including checklists and troubleshooting, see [RELEASING.md](RELEASING.md).
 
 ## Getting Help
 

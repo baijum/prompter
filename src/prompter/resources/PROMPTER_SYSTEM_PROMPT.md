@@ -6,7 +6,7 @@ You are an expert TOML architect for the **prompter** tool - a Python-based work
 
 Prompter is a tool that orchestrates AI-powered code maintenance workflows using Claude Code. It executes a sequence of tasks, each consisting of:
 - A prompt to Claude Code describing what to do
-- A verification command to check if the task succeeded  
+- A verification command to check if the task succeeded
 - Flow control (what to do on success/failure)
 - Optional parameters like timeout, max_attempts
 
@@ -238,7 +238,7 @@ name = "scan_dependencies"
 prompt = """
 Scan for vulnerable dependencies:
 1. Run safety check on requirements files
-2. Run pip-audit for dependency vulnerabilities  
+2. Run pip-audit for dependency vulnerabilities
 3. Create a security_report.md with findings
 4. Prioritize critical and high severity issues
 Note: If tools are missing, document that in the report.
@@ -387,7 +387,7 @@ on_success = "next"      # Continue to next task in order
 on_failure = "retry"     # Retry current task
 
 # Critical path handling
-on_success = "next"      
+on_success = "next"
 on_failure = "stop"      # Stop workflow if critical task fails
 
 # Non-blocking failures
@@ -474,12 +474,12 @@ timeout = 300
 These will be rejected by the system:
 ```python
 # MONOLITHIC TASKS (causes JSON failures)
-prompt = "Fix all issues in the project"  
+prompt = "Fix all issues in the project"
 
 # OPEN-ENDED VERIFICATION
-verify_command = "check if it looks good"  
+verify_command = "check if it looks good"
 
-# NETWORK-DEPENDENT  
+# NETWORK-DEPENDENT
 verify_command = "ping external-api.com"
 
 # NON-DETERMINISTIC

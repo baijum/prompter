@@ -74,7 +74,7 @@ name = "fix_build"
 on_success = "build"     # Retry build after fixing
 ```
 
-> ⚠️ **Warning: Infinite Loop Protection**  
+> ⚠️ **Warning: Infinite Loop Protection**
 > When using task jumping, be careful not to create infinite loops. Prompter automatically detects and prevents infinite loops by tracking executed tasks. If a task tries to execute twice in the same run, it will be skipped with a warning. Always ensure your task flows have a clear termination condition.
 
 ## AI-Powered Project Analysis (New in v0.7.0)
@@ -391,7 +391,7 @@ on_failure = "retry_task" # Retry on failure
 max_attempts = 1          # Important: limits retries per execution
 ```
 
-**Loop Protection:** By default, Prompter prevents infinite loops by tracking which tasks have been executed. If a task attempts to run twice in the same session, it will be skipped with a warning log. 
+**Loop Protection:** By default, Prompter prevents infinite loops by tracking which tasks have been executed. If a task attempts to run twice in the same session, it will be skipped with a warning log.
 
 **Allowing Infinite Loops:** For use cases like continuous monitoring or polling, you can enable infinite loops:
 
@@ -474,7 +474,7 @@ Prompter supports the following environment variables for additional configurati
   ```bash
   # Increase timeout for large projects
   PROMPTER_INIT_TIMEOUT=300 prompter --init
-  
+
   # Set a shorter timeout for smaller projects
   PROMPTER_INIT_TIMEOUT=60 prompter --init
   ```
@@ -500,7 +500,7 @@ For complex workflows, you can use AI assistance to generate TOML configurations
 2. **Ask your AI assistant** (Claude, ChatGPT, etc.):
    ```
    [Paste the system prompt]
-   
+
    Now create a prompter TOML configuration for: [describe your workflow]
    ```
 
@@ -514,7 +514,7 @@ For complex workflows, you can use AI assistance to generate TOML configurations
    ```bash
    # Test configuration without executing anything
    prompter generated-config.toml --dry-run
-   
+
    # This will:
    # - Validate TOML syntax
    # - Check all required fields

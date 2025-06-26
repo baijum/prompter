@@ -169,6 +169,28 @@ mypy src/
 mypy --strict src/
 ```
 
+### Pre-commit Hooks
+
+We use pre-commit hooks to automatically check code quality before commits:
+
+```bash
+# Install pre-commit hooks (one-time setup)
+pre-commit install
+
+# Run pre-commit manually on all files
+pre-commit run --all-files
+
+# Run specific hook
+pre-commit run check-version-sync --all-files
+```
+
+The pre-commit configuration includes:
+- **Trailing whitespace removal**
+- **End-of-file fixing**
+- **YAML/TOML validation**
+- **Ruff linting and formatting**
+- **Version synchronization check** - Ensures `__version__` in `src/prompter/__init__.py` matches the version in `pyproject.toml`
+
 ### All Quality Checks
 
 ```bash
@@ -203,19 +225,19 @@ make all         # All checks + tests
 # Example test structure
 class TestFeatureName:
     """Tests for the feature name functionality."""
-    
+
     def test_basic_functionality(self):
         """Test basic feature behavior."""
         # Arrange
         input_data = create_test_data()
-        
+
         # Act
         result = feature_function(input_data)
-        
+
         # Assert
         assert result.success is True
         assert result.output == expected_output
-    
+
     def test_error_handling(self):
         """Test error conditions."""
         with pytest.raises(ExpectedException):
@@ -244,11 +266,11 @@ class TestFeatureName:
 3. **Write clear commit messages**:
    ```
    feat: add support for custom success codes
-   
+
    - Allow tasks to specify custom exit codes for verification
    - Add verify_success_code configuration option
    - Update tests and documentation
-   
+
    Fixes #123
    ```
 
@@ -307,12 +329,19 @@ verify_command = "echo 'test'"
 
 ### CI/CD Pipeline
 
-Our GitHub Actions workflow:
-1. **Tests** on Python 3.11 and 3.12
-2. **Linting** with ruff
-3. **Type checking** with mypy
-4. **Coverage reporting** to Codecov
-5. **Package building** and validation
+Prompter uses GitHub Actions for continuous integration with the following checks:
+
+1. **Version Synchronization** - Ensures `__version__` in `src/prompter/__init__.py` matches the version in `pyproject.toml`
+2. **Code Quality** - Runs ruff for linting and formatting
+3. **Type Checking** - Validates type hints with mypy
+4. **Test Suite** - Runs comprehensive tests with pytest on Python 3.11 and 3.12
+5. **Coverage Reports** - Uploads test coverage to Codecov
+6. **Package Building** - Builds and validates the distribution package
+
+The version sync check runs early in the CI pipeline to catch mismatches before other tests, ensuring consistent versioning across releases. This check is enforced in:
+- Pull requests to main branch
+- Pushes to main and develop branches
+- Release/publish workflows
 
 ### Local Development Loop
 

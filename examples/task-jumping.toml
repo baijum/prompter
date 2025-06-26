@@ -3,7 +3,7 @@
 # This example demonstrates how to use task names in on_success and on_failure
 # to create complex conditional workflows.
 #
-# ⚠️ IMPORTANT: Avoid creating infinite loops! While Prompter has built-in 
+# ⚠️ IMPORTANT: Avoid creating infinite loops! While Prompter has built-in
 # loop protection, always ensure your workflows have clear exit conditions.
 # Each task should have a path that eventually leads to "stop" or the end
 # of the task list.

@@ -3,6 +3,8 @@
 import argparse
 from pathlib import Path
 
+from prompter import __version__
+
 
 def create_parser() -> argparse.ArgumentParser:
     """Create the command-line argument parser."""
@@ -81,6 +83,13 @@ Examples:
         "--log-file",
         type=Path,
         help="Path to log file (optional)",
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"prompter {__version__}",
+        help="Show program version and exit",
     )
 
     return parser

@@ -25,7 +25,7 @@ name = "scan_dependencies"
 prompt = """
 Scan for vulnerable dependencies:
 1. Run safety check on requirements files
-2. Run pip-audit for dependency vulnerabilities  
+2. Run pip-audit for dependency vulnerabilities
 3. Create a security_report.md with findings
 4. Prioritize critical and high severity issues
 Note: If tools are missing, document that in the report.

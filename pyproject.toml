@@ -41,6 +41,7 @@ dev = [
     "pytest-mock>=3.10",
     "ruff>=0.1.0",
     "mypy>=1.0",
+    "pre-commit>=3.5.0",
 ]
 test = [
     "pytest>=7.0",
@@ -72,6 +73,7 @@ ignore = [
     "G004",  # Logging f-strings (acceptable)
     "PTH123",  # Path.open vs open (both are fine)
     "S602",  # Shell=True (needed for verification commands)
+    "S603",  # Subprocess calls (needed for verification commands from config files)
     "PLC0415",  # Import placement (sometimes needed for conditional imports)
     "S110",  # Try-except-pass (used for legitimate fallback logic)
 ]

@@ -42,7 +42,7 @@ Execute the previously selected scenario (the one where @wip was removed) and an
    - Examine relevant test code
    - Identify the root cause (broken implementation, flaky test, or missing dependencies)
    - Formulate a minimal solution approach
-4. If PASSED: 
+4. If PASSED:
    - Note that the scenario is already working
    - Prepare to proceed to validation phase
 

@@ -1,7 +1,7 @@
 # Release Checklist for v0.x.x
 
-**Release Date**: YYYY-MM-DD  
-**Release Manager**: @username  
+**Release Date**: YYYY-MM-DD
+**Release Manager**: @username
 **Type**: Major / Minor / Patch
 
 ## Pre-release Checklist

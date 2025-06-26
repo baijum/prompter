@@ -1,18 +1,18 @@
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
   <!-- Background -->
   <rect width="200" height="200" fill="white"/>
-  
+
   <!-- Main circle -->
   <circle cx="100" cy="100" r="80" fill="#EBF8FF" stroke="#2B6CB0" stroke-width="3"/>
-  
+
   <!-- Prompt symbol -->
   <path d="M50 80 L70 100 L50 120" stroke="#2B6CB0" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  
+
   <!-- Task flow dots -->
   <circle cx="95" cy="100" r="6" fill="#4299E1"/>
   <circle cx="115" cy="100" r="6" fill="#63B3ED"/>
   <circle cx="135" cy="100" r="6" fill="#90CDF4"/>
-  
+
   <!-- Check mark -->
   <path d="M145 95 L150 100 L160 90" stroke="#48BB78" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

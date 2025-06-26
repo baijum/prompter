@@ -251,11 +251,11 @@ If a critical issue is found after release:
    ```bash
    # Delete GitHub release (keeps tag)
    gh release delete v0.x.x
-   
+
    # Delete tag locally and remotely
    git tag -d v0.x.x
    git push origin :refs/tags/v0.x.x
-   
+
    # Note: Cannot delete from PyPI - must create new version
    ```
 

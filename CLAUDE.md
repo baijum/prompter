@@ -78,7 +78,7 @@ pytest -m "not integration"
 
 **Test Structure:**
 - `tests/test_config.py` - Configuration parsing and validation
-- `tests/test_runner.py` - Task execution with mocked subprocess calls  
+- `tests/test_runner.py` - Task execution with mocked subprocess calls
 - `tests/test_state.py` - State management with file system mocking
 - `tests/test_cli.py` - CLI argument parsing and integration
 - `tests/test_integration.py` - End-to-end integration tests

@@ -103,7 +103,7 @@ on_success = "stop"           # Manual trigger only
 ### 🚨 Security Workflow
 ```toml
 [[tasks]]
-name = "vulnerability_scan"   
+name = "vulnerability_scan"
 verify_command = "test -f security.md"  # Report-based check
 
 [[tasks]]
@@ -155,7 +155,7 @@ timeout = 120
 ```
 
 ## Critical Reminders
-⚠️ **NO MONOLITHIC PROMPTS** - Break workflows into 3-8 discrete tasks  
-⚠️ **ALL VERIFICATION COMMANDS** must be <5s when possible  
-⚠️ **SET EXPLICIT TIMEOUTS** for every task  
+⚠️ **NO MONOLITHIC PROMPTS** - Break workflows into 3-8 discrete tasks
+⚠️ **ALL VERIFICATION COMMANDS** must be <5s when possible
+⚠️ **SET EXPLICIT TIMEOUTS** for every task
 ⚠️ **ALWAYS INCLUDE DRY-RUN VALIDATION** in your response

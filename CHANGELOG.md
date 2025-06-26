@@ -48,13 +48,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed `prompter --init` hanging issue**
   - Removed incorrect monkey patch that was causing TaskGroup errors with Claude Code SDK
   - The monkey patch was incorrectly replacing `open_process` with `run_process` which are incompatible
-  
+
 - **Improved `--init` command performance**
   - Simplified AI analysis prompt to reduce response time significantly
   - Added key project files detection to provide context without full directory scan
   - Removed large system prompt that was causing excessive delays
   - Analysis now completes in seconds rather than timing out
-  
+
 - **Enhanced error handling and debugging**
   - Added detailed logging for Claude SDK interactions
   - Improved error messages to help diagnose SDK issues
@@ -231,7 +231,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Codebase refactoring workflow for modernization
   - BDD workflow for test-driven development
   - Detailed README with usage patterns and best practices
-  
+
 - **Advanced system prompt** (`PROMPTER_SYSTEM_PROMPT.md`)
   - Comprehensive guidance for Claude Code interactions
   - Built-in safety checks and verification patterns

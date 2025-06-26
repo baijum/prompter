@@ -225,7 +225,7 @@ class TaskRunner:
             # Security: subprocess.run with user input requires careful handling
             # Since verification commands come from config files (trusted source),
             # and we're using shlex.split to parse them safely, this is acceptable
-            result = subprocess.run(  # noqa: S603
+            result = subprocess.run(
                 cmd_args,
                 check=False,
                 cwd=self.current_directory,

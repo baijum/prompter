@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-06-26
+
+### 🚀 New Features
+
+- **AI-Powered Project Analysis with --init**
+  - New `prompter --init` command that uses Claude to analyze your project
+  - Automatically detects project language, tools, and structure
+  - Identifies improvement opportunities (tests, linting, security, etc.)
+  - Generates customized TOML configurations based on project needs
+  - Interactive mode to confirm and refine AI suggestions
+  - Support for multiple language-specific templates
+
+### 🛡️ Improvements
+
+- **Enhanced System Prompt**
+  - Added strict task length constraints (7 lines max per prompt)
+  - Added atomic task design examples with BAD vs GOOD patterns
+  - Made verification speed requirement explicit (<5 seconds)
+  - Added forbidden patterns section to prevent common mistakes
+  - Added BDD workflow example for behavior-driven development
+  - Added rollback option for destructive operations
+  - Strengthened configuration priorities and safety guidelines
+
+### 🐛 Bug Fixes
+
+- Fixed importlib.resources deprecation warning by migrating to files() API
+- Fixed RuntimeWarning in tests by properly handling async iterators
+- Removed problematic TaskResult import to avoid async warnings
+
+### 📚 Documentation
+
+- Updated CLAUDE.md with mandatory date command rule
+- Enhanced system prompt documentation with clearer constraints
+- Added comprehensive examples for atomic task design
+
 ## [0.6.0] - 2025-01-26
 
 ### 🚀 New Features

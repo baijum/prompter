@@ -75,6 +75,7 @@ class PrompterConfig:
 
             # Parse error message for line and column
             import re
+
             match = re.search(r"at line (\d+), column (\d+)", error_msg)
             if match:
                 line_num = int(match.group(1))
@@ -101,7 +102,8 @@ class PrompterConfig:
                                     context_lines.append(pointer)
                             else:
                                 context_lines.append(f"    {i + 1:4d} | {line}")
-            except Exception:
+            except Exception:  # noqa: S110
+                # It's okay to fail here - we're just trying to provide better context
                 pass
 
             # Create enhanced error message

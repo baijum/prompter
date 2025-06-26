@@ -1,5 +1,6 @@
 """Tests for the task runner module."""
 
+import asyncio
 import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -226,8 +227,8 @@ class TestTaskRunner:
         assert result.attempts == 1  # Should stop after first failure
 
     @patch("prompter.runner.query")
-    def test_sdk_timeout(self, mock_query, mock_config):
-        """Test task execution with timeout."""
+    def test_sdk_timeout_legacy(self, mock_query, mock_config):
+        """Test task execution with timeout (legacy TimeoutError)."""
         task = TaskConfig(
             {
                 "name": "timeout_task",
@@ -436,3 +437,146 @@ class TestTaskRunner:
         result = runner.run_task(task)
 
         assert result.success is True
+
+    @patch("prompter.runner.query")
+    @patch("prompter.runner.asyncio.wait_for")
+    def test_sdk_timeout_with_asyncio(self, mock_wait_for, mock_query, mock_config):
+        """Test task execution with asyncio timeout."""
+        task = TaskConfig(
+            {
+                "name": "timeout_task",
+                "prompt": "Long running task",
+                "verify_command": "make",
+                "timeout": 5,
+                "max_attempts": 1,
+            }
+        )
+
+        # Mock asyncio.wait_for to raise TimeoutError
+        mock_wait_for.side_effect = TimeoutError()
+
+        runner = TaskRunner(mock_config)
+        result = runner.run_task(task)
+
+        assert result.success is False
+        assert "timed out after 5 seconds" in result.error
+        mock_wait_for.assert_called_once()
+
+    @patch("prompter.runner.query")
+    def test_sdk_no_timeout_specified(self, mock_query, mock_config):
+        """Test task execution without timeout specified."""
+        task = TaskConfig(
+            {
+                "name": "no_timeout_task",
+                "prompt": "Task without timeout",
+                "verify_command": "make",
+                "max_attempts": 1,
+            }
+        )
+
+        # Mock SDK query success response
+        mock_message = Mock()
+        mock_content = Mock()
+        mock_content.text = "Task completed"
+        mock_message.content = [mock_content]
+
+        async def mock_async_gen():
+            yield mock_message
+
+        mock_query.return_value = mock_async_gen()
+
+        # Mock verification success
+        with patch("prompter.runner.subprocess.run") as mock_subprocess:
+            verify_result = Mock()
+            verify_result.returncode = 0
+            verify_result.stdout = "Build successful"
+            verify_result.stderr = ""
+            mock_subprocess.return_value = verify_result
+
+            runner = TaskRunner(mock_config)
+
+            # Spy on asyncio.wait_for to ensure it's not called when no timeout
+            with patch(
+                "prompter.runner.asyncio.wait_for", wraps=asyncio.wait_for
+            ) as mock_wait_for:
+                result = runner.run_task(task)
+
+                assert result.success is True
+                assert task.timeout is None
+                # wait_for should not be called when no timeout is specified
+                mock_wait_for.assert_not_called()
+
+    @patch("prompter.runner.query")
+    def test_sdk_with_timeout_success(self, mock_query, mock_config):
+        """Test successful task execution with timeout specified."""
+        task = TaskConfig(
+            {
+                "name": "timeout_success_task",
+                "prompt": "Quick task with timeout",
+                "verify_command": "make",
+                "timeout": 30,
+                "max_attempts": 1,
+            }
+        )
+
+        # Mock SDK query success response
+        mock_message = Mock()
+        mock_content = Mock()
+        mock_content.text = "Task completed quickly"
+        mock_message.content = [mock_content]
+
+        async def mock_async_gen():
+            yield mock_message
+
+        mock_query.return_value = mock_async_gen()
+
+        # Mock verification success
+        with patch("prompter.runner.subprocess.run") as mock_subprocess:
+            verify_result = Mock()
+            verify_result.returncode = 0
+            verify_result.stdout = "Build successful"
+            verify_result.stderr = ""
+            mock_subprocess.return_value = verify_result
+
+            runner = TaskRunner(mock_config)
+            result = runner.run_task(task)
+
+            assert result.success is True
+            assert "Task completed quickly" in result.output
+
+    @patch("prompter.runner.query")
+    def test_sdk_multiple_timeout_attempts(self, mock_query, mock_config):
+        """Test task execution with multiple timeout attempts."""
+        task = TaskConfig(
+            {
+                "name": "timeout_retry_task",
+                "prompt": "Task with timeout",
+                "verify_command": "make",
+                "timeout": 1,
+                "max_attempts": 3,
+                "on_failure": "retry",
+            }
+        )
+
+        # Always timeout to test retry behavior
+        async def mock_async_gen():
+            # Simulate slow query that will timeout
+            await asyncio.sleep(10)
+            yield  # Never reached due to timeout
+
+        mock_query.return_value = mock_async_gen()
+
+        runner = TaskRunner(mock_config)
+
+        # Mock asyncio.wait_for to always timeout for this test
+        with patch("prompter.runner.asyncio.wait_for") as mock_wait_for:
+            mock_wait_for.side_effect = TimeoutError()
+
+            result = runner.run_task(task)
+
+            # Should fail after max attempts with timeout
+            assert result.success is False
+            assert result.attempts == 3
+            assert "timed out after 1 seconds" in result.error
+            # wait_for should be called once per attempt
+            assert mock_wait_for.call_count == 3

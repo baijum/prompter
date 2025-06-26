@@ -179,7 +179,9 @@ class TaskRunner:
 
     async def _execute_claude_prompt_async(self, task: TaskConfig) -> tuple[bool, str]:
         """Execute a Claude Code prompt using SDK asynchronously."""
-        try:
+
+        async def run_query() -> list:
+            """Inner function to run the query that can be wrapped with timeout."""
             # Create options with working directory
             options = ClaudeCodeOptions(
                 cwd=str(self.current_directory),
@@ -190,6 +192,15 @@ class TaskRunner:
             messages = []
             async for message in query(prompt=task.prompt, options=options):
                 messages.append(message)
+
+            return messages
+
+        try:
+            # Execute with timeout if specified
+            if task.timeout:
+                messages = await asyncio.wait_for(run_query(), timeout=task.timeout)
+            else:
+                messages = await run_query()
 
             # Extract text content from messages
             output_text = ""

@@ -1,6 +1,7 @@
 """Main orchestration logic for the prompter CLI."""
 
 import sys
+import tomllib
 from pathlib import Path
 
 from prompter.config import PrompterConfig
@@ -159,6 +160,10 @@ def main() -> int:
         logger.debug(f"Execution complete: {len(failed_tasks)} failed tasks")
         return 1 if failed_tasks else 0
 
+    except tomllib.TOMLDecodeError as e:
+        # For TOML errors, the enhanced message is already in the exception
+        print(f"\n{e}", file=sys.stderr)
+        return 1
     except Exception as e:
         logger.exception("Unhandled exception")
         print(f"Error: {e}", file=sys.stderr)

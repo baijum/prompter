@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🚀 Improvements
+
+- **Enhanced TOML parsing error messages**
+  - Error messages now show the exact line and column where the error occurred
+  - Displays context with surrounding lines and a visual pointer to the problem
+  - Provides helpful hints for common errors (e.g., unescaped backslashes)
+  - Suggests alternative syntax options (single quotes, triple quotes) for file paths
+
+### 📚 Documentation
+
+- Added troubleshooting entry for TOML backslash escaping errors in README.md
+
 ## [0.4.4] - 2025-06-26
 
 ### 📚 Documentation

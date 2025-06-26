@@ -67,9 +67,57 @@ class PrompterConfig:
                     f"Successfully parsed TOML file with {len(config)} top-level sections"
                 )
                 return config
-        except tomllib.TOMLDecodeError:
-            self.logger.exception("Failed to parse TOML file")
-            raise
+        except tomllib.TOMLDecodeError as e:
+            # Extract line and column information from the error message
+            error_msg = str(e)
+            line_num = None
+            col_num = None
+            
+            # Parse error message for line and column
+            import re
+            match = re.search(r"at line (\d+), column (\d+)", error_msg)
+            if match:
+                line_num = int(match.group(1))
+                col_num = int(match.group(2))
+            
+            # Read the problematic line if possible
+            context_lines = []
+            try:
+                with open(self.config_path, "r") as f:
+                    lines = f.readlines()
+                    if line_num and 0 < line_num <= len(lines):
+                        # Show 2 lines before and after for context
+                        start = max(0, line_num - 3)
+                        end = min(len(lines), line_num + 2)
+                        
+                        for i in range(start, end):
+                            line = lines[i].rstrip()
+                            if i + 1 == line_num:
+                                # Highlight the problematic line
+                                context_lines.append(f">>> {i + 1:4d} | {line}")
+                                if col_num:
+                                    # Add pointer to specific column
+                                    pointer = " " * (col_num + 6) + "^"
+                                    context_lines.append(pointer)
+                            else:
+                                context_lines.append(f"    {i + 1:4d} | {line}")
+            except Exception:
+                pass
+            
+            # Create enhanced error message
+            enhanced_msg = f"TOML parsing error in {self.config_path}:\n{error_msg}"
+            
+            if context_lines:
+                enhanced_msg += "\n\nContext:\n" + "\n".join(context_lines)
+            
+            # Add helpful hints based on the error type
+            if "Unescaped '\\'" in error_msg:
+                enhanced_msg += "\n\nHint: In TOML strings, backslashes must be escaped. Use '\\\\' for a literal backslash."
+                enhanced_msg += "\nFor file paths, consider using single quotes (') or raw strings (''') to avoid escaping."
+                enhanced_msg += "\nExample: path = 'C:\\Users\\name' or path = '''C:\\Users\\name'''"
+            
+            # Don't log here - the exception will be displayed by the CLI
+            raise tomllib.TOMLDecodeError(enhanced_msg) from e
 
     def get_task_by_name(self, name: str) -> TaskConfig | None:
         """Get a task configuration by name."""

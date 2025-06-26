@@ -372,6 +372,13 @@ verify_command = "pytest"
 3. **"State file corrupted"** - Rare issue with interrupted execution
    - Solution: Run `prompter --clear-state` to start fresh
 
+4. **"Unescaped '\' in a string"** - TOML parsing error with backslashes in strings
+   - Solution: In TOML, backslashes must be escaped. Use one of these approaches:
+     - Double backslashes: `path = "C:\\Users\\name\\project"`
+     - Single quotes: `path = 'C:\Users\name\project'`
+     - Triple quotes: `path = '''C:\Users\name\project'''`
+   - The error message now shows the exact line and column with helpful context
+
 ### Debug Mode
 
 Run with extensive logging to diagnose issues:

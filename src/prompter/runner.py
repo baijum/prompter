@@ -7,12 +7,14 @@ from pathlib import Path
 
 # Monkey patch for issue: https://github.com/anthropics/claude-code-sdk-python/issues/32
 import claude_code_sdk._internal.transport.subprocess_cli
-claude_code_sdk._internal.transport.subprocess_cli.anyio.open_process = claude_code_sdk._internal.transport.subprocess_cli.anyio.run_process
-
 from claude_code_sdk import ClaudeCodeOptions, query
 
 from .config import PrompterConfig, TaskConfig
 from .logging import get_logger
+
+claude_code_sdk._internal.transport.subprocess_cli.anyio.open_process = (  # noqa: SLF001
+    claude_code_sdk._internal.transport.subprocess_cli.anyio.run_process  # type: ignore[assignment]  # noqa: SLF001
+)
 
 
 class TaskResult:

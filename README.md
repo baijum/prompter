@@ -77,17 +77,71 @@ on_success = "build"     # Retry build after fixing
 > ⚠️ **Warning: Infinite Loop Protection**  
 > When using task jumping, be careful not to create infinite loops. Prompter automatically detects and prevents infinite loops by tracking executed tasks. If a task tries to execute twice in the same run, it will be skipped with a warning. Always ensure your task flows have a clear termination condition.
 
+## AI-Powered Project Analysis (New in v0.7.0)
+
+Prompter can now analyze your project using Claude and automatically generate a customized configuration file tailored to your specific codebase.
+
+### How It Works
+
+The `--init` command:
+1. **Scans your project** to detect languages, frameworks, and tools
+2. **Analyzes code quality** to identify improvement opportunities
+3. **Generates specific tasks** based on your project's needs
+4. **Creates a ready-to-use configuration** with proper verification commands
+
+### Examples
+
+```bash
+# Analyze current directory and generate prompter.toml
+prompter --init
+
+# Generate configuration with a custom name
+prompter --init my-workflow.toml
+
+# Analyze a specific directory
+prompter --init --working-dir /path/to/project
+
+# Generate for a specific language (skip auto-detection)
+prompter --init --language python
+
+# Non-interactive mode (accept all suggestions)
+prompter --init --yes
+```
+
+### Supported Languages
+
+The AI analyzer can detect and generate configurations for:
+- Python (pytest, mypy, ruff, black)
+- JavaScript/TypeScript (jest, eslint, prettier)
+- Rust (cargo test, clippy, rustfmt)
+- Go (go test, golint, gofmt)
+- And more...
+
+### What Gets Analyzed
+
+- **Build Systems**: make, npm, cargo, gradle, etc.
+- **Test Frameworks**: pytest, jest, cargo test, go test, etc.
+- **Linters**: ruff, eslint, clippy, golint, etc.
+- **Type Checkers**: mypy, tsc, etc.
+- **Code Issues**: failing tests, linting errors, type issues
+- **Security**: outdated dependencies, known vulnerabilities
+- **Documentation**: missing docstrings, outdated READMEs
+
 ## Quick Start
 
-1. **Generate a sample configuration** to get started quickly:
+1. **Let AI analyze your project** and generate a customized configuration:
    ```bash
    prompter --init
    ```
+   This will:
+   - Detect your project's language and tools automatically
+   - Identify specific issues that need fixing
+   - Generate tasks tailored to your codebase
 
-2. **Customize the configuration** file (`prompter.toml`) for your project:
-   - Replace `make` commands with your project's build/test commands
-   - Adjust prompts to match your coding standards
-   - Modify task flow and retry settings
+2. **Review and customize** the generated configuration (`prompter.toml`):
+   - The AI will show you what it found and ask for confirmation
+   - You can modify task prompts and commands as needed
+   - Adjust retry settings and flow control
 
 3. **Test your configuration** with a dry run:
    ```bash
@@ -104,9 +158,11 @@ on_success = "build"     # Retry build after fixing
 ### Basic Commands
 
 ```bash
-# Generate a sample configuration file to get started
-prompter --init                     # Creates prompter.toml
-prompter --init my-config.toml      # Creates custom-named config
+# AI-powered configuration generation (analyzes your project)
+prompter --init                     # Analyze project and create prompter.toml
+prompter --init my-config.toml      # Create with custom name
+prompter --init --language python    # Force specific language detection
+prompter --init --yes              # Non-interactive mode
 
 # Run all tasks from a configuration file
 prompter config.toml

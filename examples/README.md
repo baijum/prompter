@@ -24,9 +24,26 @@ This directory contains example TOML configurations demonstrating various use ca
 - Implements fixes automatically
 - Maintains functionality with tests
 
+## Getting Started with AI
+
+The easiest way to create a configuration is to let AI analyze your project:
+
+```bash
+# Let AI analyze your project and generate a custom configuration
+prompter --init
+
+# Generate for a specific language
+prompter --init --language python
+
+# Use non-interactive mode
+prompter --init --yes
+```
+
+This will create a `prompter.toml` file tailored to your project's specific needs.
+
 ## Creating Your Own Workflows
 
-When creating TOML configurations, remember:
+When creating TOML configurations manually, remember:
 
 1. **Break Down Complex Tasks**: Avoid large prompts that might trigger JSON parsing errors
 2. **Use Meaningful Names**: Task names should clearly indicate what they do

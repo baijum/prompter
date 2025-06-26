@@ -32,11 +32,8 @@ The easiest way to create a configuration is to let AI analyze your project:
 # Let AI analyze your project and generate a custom configuration
 prompter --init
 
-# Generate for a specific language
-prompter --init --language python
-
-# Use non-interactive mode
-prompter --init --yes
+# Increase timeout for large projects (default: 120 seconds)
+PROMPTER_INIT_TIMEOUT=300 prompter --init
 ```
 
 This will create a `prompter.toml` file tailored to your project's specific needs.

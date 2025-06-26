@@ -351,6 +351,18 @@ prompter config.toml --dry-run
 prompter --status
 ```
 
+### Environment Variables
+
+Prompter supports the following environment variables:
+
+```bash
+# Set timeout for AI analysis during --init (default: 120 seconds)
+PROMPTER_INIT_TIMEOUT=300 prompter --init
+
+# Example: Quick timeout for testing
+PROMPTER_INIT_TIMEOUT=30 prompter --init
+```
+
 ## Project Structure
 
 ```

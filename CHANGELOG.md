@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Generates customized TOML configurations based on project needs
   - Interactive mode to confirm and refine AI suggestions
   - Support for multiple language-specific templates
+  - Configurable timeout via `PROMPTER_INIT_TIMEOUT` environment variable (default: 120 seconds)
 
 ### 🛡️ Improvements
 

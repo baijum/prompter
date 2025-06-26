@@ -173,3 +173,10 @@ on_failure = "retry"
 2. Run `prompter config.toml` to execute all tasks
 3. Monitor progress with `prompter --status`
 4. Use `--dry-run` for testing configurations
+
+### Environment Variables
+- `PROMPTER_INIT_TIMEOUT`: Controls the timeout (in seconds) for AI project analysis during `prompter --init`. Default is 120 seconds. Useful for large projects that need more time for analysis:
+  ```bash
+  export PROMPTER_INIT_TIMEOUT=300  # 5 minutes
+  prompter --init
+  ```

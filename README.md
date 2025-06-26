@@ -97,15 +97,6 @@ prompter --init
 
 # Generate configuration with a custom name
 prompter --init my-workflow.toml
-
-# Analyze a specific directory
-prompter --init --working-dir /path/to/project
-
-# Generate for a specific language (skip auto-detection)
-prompter --init --language python
-
-# Non-interactive mode (accept all suggestions)
-prompter --init --yes
 ```
 
 ### Supported Languages
@@ -161,8 +152,6 @@ The AI analyzer can detect and generate configurations for:
 # AI-powered configuration generation (analyzes your project)
 prompter --init                     # Analyze project and create prompter.toml
 prompter --init my-config.toml      # Create with custom name
-prompter --init --language python    # Force specific language detection
-prompter --init --yes              # Non-interactive mode
 
 # Run all tasks from a configuration file
 prompter config.toml
@@ -476,6 +465,19 @@ timeout = 300
 - `timeout`: Task timeout in seconds (optional, no timeout if not specified)
 
 > **Note on Task Jumping:** When using task names in `on_success` or `on_failure`, ensure your workflow has exit conditions to prevent infinite loops. Prompter will skip tasks that have already executed to prevent infinite loops.
+
+### Environment Variables
+
+Prompter supports the following environment variables for additional configuration:
+
+- `PROMPTER_INIT_TIMEOUT`: Sets the timeout (in seconds) for AI analysis during `--init` command (default: 120)
+  ```bash
+  # Increase timeout for large projects
+  PROMPTER_INIT_TIMEOUT=300 prompter --init
+  
+  # Set a shorter timeout for smaller projects
+  PROMPTER_INIT_TIMEOUT=60 prompter --init
+  ```
 
 ## Examples and Templates
 

@@ -2,6 +2,7 @@
 
 import asyncio
 import importlib.util
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -86,10 +87,11 @@ class ConfigGenerator:
         analyzer = ProjectAnalyzer(self.project_path)
 
         # Run async analysis with timeout
+        timeout = int(os.environ.get("PROMPTER_INIT_TIMEOUT", "120"))
         try:
-            analysis = asyncio.run(analyzer.analyze_with_timeout(timeout=30))
+            analysis = asyncio.run(analyzer.analyze_with_timeout(timeout=timeout))
         except TimeoutError as e:
-            msg = "Analysis timed out after 30 seconds. Please try again."
+            msg = f"Analysis timed out after {timeout} seconds. Please try again.\nYou can increase the timeout by setting PROMPTER_INIT_TIMEOUT environment variable."
             raise TimeoutError(msg) from e
 
         # Display results

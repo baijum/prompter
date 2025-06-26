@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2025-06-26
+
+### 🐛 Bug Fixes
+
+- **Fixed `prompter --init` hanging issue**
+  - Removed incorrect monkey patch that was causing TaskGroup errors with Claude Code SDK
+  - The monkey patch was incorrectly replacing `open_process` with `run_process` which are incompatible
+  
+- **Improved `--init` command performance**
+  - Simplified AI analysis prompt to reduce response time significantly
+  - Added key project files detection to provide context without full directory scan
+  - Removed large system prompt that was causing excessive delays
+  - Analysis now completes in seconds rather than timing out
+  
+- **Enhanced error handling and debugging**
+  - Added detailed logging for Claude SDK interactions
+  - Improved error messages to help diagnose SDK issues
+  - Better handling of TaskGroup exceptions from the SDK
+
+### 🔧 Code Quality
+
+- Fixed all linting errors and improved code style
+- Added missing newline at end of `__main__.py`
+- Improved async event loop handling using `asyncio.run()`
+
 ## [0.7.2] - 2025-06-26
 
 ### 🐛 Bug Fixes

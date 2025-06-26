@@ -56,7 +56,7 @@ class TestProjectAnalyzer:
         """Test analyzer initialization."""
         analyzer = ProjectAnalyzer(tmp_path)
         assert analyzer.project_path == tmp_path
-        assert "You are an expert TOML architect" in analyzer.system_prompt
+        assert "You are an AI assistant" in analyzer.system_prompt
 
     @pytest.mark.asyncio
     async def test_analyze_with_timeout_success(self, tmp_path):
@@ -95,11 +95,10 @@ class TestProjectAnalyzer:
         prompt = analyzer._build_analysis_prompt()
 
         # Check key elements
-        assert analyzer.system_prompt in prompt
-        assert "valid JSON object" in prompt
+        assert "JSON object" in prompt
         assert '"language"' in prompt
         assert '"suggestions"' in prompt
-        assert "Return ONLY the JSON object" in prompt
+        assert "IMPORTANT" in prompt
 
     def test_parse_analysis_response_valid_json(self):
         """Test parsing valid JSON response."""

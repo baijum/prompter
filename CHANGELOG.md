@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] - 2025-06-27
+
 ### 🐛 Bug Fixes
 
 - **Shell Command Support in `verify_command`**

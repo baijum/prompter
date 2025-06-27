@@ -78,7 +78,7 @@ class TaskRunner:
                     return True
 
         # Handle exception with __cause__ chain
-        if exception.__cause__:
+        if exception.__cause__ and isinstance(exception.__cause__, Exception):
             return self._contains_json_error(exception.__cause__)
 
         return False

@@ -8,7 +8,6 @@
 
 A Python tool for orchestrating AI-powered code maintenance workflows using Claude Code SDK.
 
-[![PyPI version](https://badge.fury.io/py/claude-code-prompter.svg)](https://badge.fury.io/py/claude-code-prompter)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -23,9 +22,9 @@ A Python tool for orchestrating AI-powered code maintenance workflows using Clau
 
 ## Installation
 
-### Install from GitHub (Recommended)
+### Install from GitHub
 
-Due to the dependency on the latest Claude Code SDK features, install directly from GitHub:
+Install directly from GitHub:
 
 ```bash
 # Install the latest release
@@ -33,16 +32,6 @@ pip install git+https://github.com/baijum/prompter.git@v0.10.0
 
 # Or install the latest development version
 pip install git+https://github.com/baijum/prompter.git@main
-```
-
-### Install from PyPI
-
-> **⚠️ Important**: PyPI installation is currently not available for versions after v0.9.1 due to the Git-based Claude Code SDK dependency. The project uses the SDK directly from the Git repository to ensure immediate access to bug fixes and new features.
-
-For older versions (up to v0.9.1):
-
-```bash
-pip install claude-code-prompter==0.9.1
 ```
 
 ### Install from Source
@@ -61,7 +50,7 @@ pip install -e .
 pip install -e ".[dev]"
 ```
 
-> **Note**: The Claude Code SDK dependency is automatically installed from `github.com/baijum/claude-code-sdk-python` to ensure you get the latest updates and bug fixes.
+> **Note**: The Claude Code SDK dependency is automatically installed from `github.com/baijum/claude-code-sdk-python`.
 
 ## How It Works
 

@@ -1,0 +1,80 @@
+# Example configuration demonstrating parallel task execution with dependencies
+#
+# This example shows how to use the new parallel execution feature to run
+# multiple independent tasks simultaneously while respecting dependencies.
+
+[settings]
+# Enable parallel execution with up to 4 concurrent tasks
+max_parallel_tasks = 4
+enable_parallel = true
+
+# Other settings
+check_interval = 2
+max_retries = 3
+
+# Stage 1: Independent analysis tasks that can run in parallel
+[[tasks]]
+name = "analyze_frontend"
+prompt = "Analyze the frontend code structure and create a summary of components, their relationships, and any potential issues"
+verify_command = "test -f frontend_analysis.md"
+depends_on = []  # No dependencies - can start immediately
+
+[[tasks]]
+name = "analyze_backend"
+prompt = "Analyze the backend code structure and create a summary of APIs, database models, and business logic"
+verify_command = "test -f backend_analysis.md"
+depends_on = []  # No dependencies - can start immediately
+
+[[tasks]]
+name = "analyze_tests"
+prompt = "Analyze the test suite and create a coverage report highlighting areas that need more testing"
+verify_command = "test -f test_analysis.md"
+depends_on = []  # No dependencies - can start immediately
+
+# Stage 2: Tasks that depend on Stage 1 analyses
+[[tasks]]
+name = "create_architecture_diagram"
+prompt = "Based on the frontend and backend analyses, create an architecture diagram showing how components interact"
+verify_command = "test -f architecture.md"
+depends_on = ["analyze_frontend", "analyze_backend"]  # Waits for both analyses
+
+[[tasks]]
+name = "generate_test_plan"
+prompt = "Based on the test analysis and architecture, create a comprehensive test plan for missing coverage"
+verify_command = "test -f test_plan.md"
+depends_on = ["analyze_tests", "create_architecture_diagram"]  # Waits for test analysis and architecture
+
+# Stage 3: Final documentation task
+[[tasks]]
+name = "create_technical_docs"
+prompt = "Combine all analyses and diagrams into comprehensive technical documentation"
+verify_command = "test -f technical_docs.md"
+depends_on = ["create_architecture_diagram", "generate_test_plan"]  # Waits for all previous work
+
+# Example with resource constraints (future feature)
+[[tasks]]
+name = "memory_intensive_task"
+prompt = "Process large dataset and generate statistics"
+verify_command = "test -f statistics.csv"
+memory_required = 4096  # Requires 4GB RAM
+cpu_required = 2.0  # Requires 2 CPU cores
+depends_on = []
+
+# Example with exclusive execution (future feature)
+[[tasks]]
+name = "database_migration"
+prompt = "Run database migration that requires exclusive access"
+verify_command = "echo 'migration complete'"
+exclusive = true  # Must run alone, no other tasks in parallel
+depends_on = ["analyze_backend"]
+
+# Example execution flow:
+#
+# Time 0: Start analyze_frontend, analyze_backend, analyze_tests, memory_intensive_task (all in parallel)
+# Time 1: All Stage 1 tasks complete
+# Time 2: Start create_architecture_diagram and database_migration
+# Time 3: Architecture complete, start generate_test_plan
+# Time 4: Test plan complete, start create_technical_docs
+# Time 5: All tasks complete
+#
+# This parallel execution can reduce total runtime from ~8 sequential tasks to ~5 time units

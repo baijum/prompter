@@ -83,12 +83,25 @@ open htmlcov/index.html  # View coverage report
 
 ### Test Categories
 
+We use pytest markers to categorize tests:
+
+- **`unit`**: Unit tests (fast, isolated tests)
+- **`integration`**: Integration tests that test multiple components
+- **`slow`**: Tests that take significant time to run
+- **`asyncio`**: Asynchronous test cases
+
 ```bash
-# Run only unit tests (excluding integration)
-pytest -m "not integration"
+# Run only unit tests (excluding integration and slow tests)
+pytest -m "not integration and not slow"
 
 # Run only integration tests
 pytest -m integration
+
+# Run only slow tests
+pytest -m slow
+
+# Run tests excluding slow tests
+pytest -m "not slow"
 
 # Run specific test file
 pytest tests/test_config.py
@@ -100,17 +113,36 @@ pytest -k "test_config"
 pytest -v
 ```
 
+#### Test Markers Applied
+
+**Slow Tests (`@pytest.mark.slow`)**:
+- `test_parallel_execution.py::test_parallel_execution_respects_dependencies` - Simulates work with delays
+- `test_progress_display.py::test_thread_safety` - Tests thread safety with delays
+- `test_parallel_integration.py::TestParallelIntegration` - Complex integration tests
+
+**Integration Tests (`@pytest.mark.integration`)**:
+- `test_parallel_integration.py::TestParallelIntegration` - Parallel execution scenarios
+- `test_parallel_integration_simple.py::TestParallelExecutionIntegration` - Simplified integration tests
+- `test_parallel_demo.py::TestParallelExecutionDemo` - Demonstration tests
+- `test_integration.py::TestEndToEndIntegration` - End-to-end tests
+
 ### Using Make Commands
 
 ```bash
 # Run all tests
 make test
 
-# Run unit tests only
+# Run unit tests only (excluding integration and slow)
 make test-unit
 
 # Run integration tests only
 make test-integration
+
+# Run slow tests only
+make test-slow
+
+# Run fast tests only (exclude slow tests)
+make test-fast
 
 # Run tests with coverage
 make coverage
@@ -120,6 +152,9 @@ make coverage-html
 
 # Show coverage report in terminal with missing lines
 make coverage-report
+
+# Run unit tests with coverage
+make coverage-unit
 ```
 
 ### Using Tox for Multi-Version Testing

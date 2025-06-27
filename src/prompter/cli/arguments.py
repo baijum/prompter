@@ -18,6 +18,8 @@ Examples:
   prompter config.toml                    # Run all tasks from config.toml
   prompter config.toml --dry-run          # Show what would be executed
   prompter config.toml --task fix_warnings # Run only the 'fix_warnings' task
+  prompter config.toml --no-progress      # Run without progress visualization
+  prompter config.toml --simple-progress  # Use simple progress output
   prompter --status                       # Show current task status
   prompter --clear-state                  # Clear all saved state
         """,
@@ -83,6 +85,19 @@ Examples:
         "--log-file",
         type=Path,
         help="Path to log file (optional)",
+    )
+
+    # Progress display options
+    progress_group = parser.add_mutually_exclusive_group()
+    progress_group.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable progress visualization (useful for CI/CD)",
+    )
+    progress_group.add_argument(
+        "--simple-progress",
+        action="store_true",
+        help="Use simple progress output instead of rich terminal UI",
     )
 
     parser.add_argument(

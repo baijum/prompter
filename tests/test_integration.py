@@ -10,6 +10,7 @@ from prompter.runner import TaskRunner
 from prompter.state import StateManager
 
 
+@pytest.mark.integration
 class TestEndToEndIntegration:
     """End-to-end integration tests."""
 

@@ -172,6 +172,251 @@ resume_previous_session = true  # Understands what was attempted and why it fail
 
 > 💡 **Pro Tip**: Session resumption is particularly powerful for complex, multi-step workflows where Claude needs to maintain understanding of your codebase architecture, previous decisions, and implementation details across tasks.
 
+### 4. Parallel Task Execution (New in v0.10.0)
+
+Prompter now supports parallel execution of independent tasks, dramatically reducing workflow execution time for complex projects. Tasks with dependencies are executed in the correct order while independent tasks run concurrently.
+
+#### Basic Parallel Configuration
+
+```toml
+[settings]
+# Enable parallel execution with up to 4 concurrent tasks
+max_parallel_tasks = 4
+enable_parallel = true
+
+# Stage 1: Independent tasks run in parallel
+[[tasks]]
+name = "lint_frontend"
+prompt = "Fix all linting errors in the frontend code"
+verify_command = "npm run lint"
+depends_on = []  # No dependencies - starts immediately
+
+[[tasks]]
+name = "lint_backend"
+prompt = "Fix all linting errors in the backend code"
+verify_command = "ruff check ."
+depends_on = []  # No dependencies - starts immediately
+
+[[tasks]]
+name = "update_docs"
+prompt = "Update API documentation"
+verify_command = "test -f docs/api.md"
+depends_on = []  # No dependencies - starts immediately
+
+# Stage 2: Tasks that depend on Stage 1
+[[tasks]]
+name = "run_tests"
+prompt = "Run all tests after linting is complete"
+verify_command = "pytest && npm test"
+depends_on = ["lint_frontend", "lint_backend"]  # Waits for both linting tasks
+
+# Stage 3: Final task
+[[tasks]]
+name = "build_release"
+prompt = "Build the release package"
+verify_command = "make build"
+depends_on = ["run_tests", "update_docs"]  # Waits for tests and docs
+```
+
+#### How It Works
+
+1. **Dependency Analysis**: Prompter builds a directed acyclic graph (DAG) of your tasks
+2. **Parallel Scheduling**: Tasks with no unmet dependencies run concurrently
+3. **Resource Management**: Respects the `max_parallel_tasks` limit
+4. **Progress Tracking**: Shows real-time status of all running tasks
+5. **Thread-Safe State**: Ensures consistent state updates across parallel executions
+
+#### Execution Flow Example
+
+```
+Time 0: Start lint_frontend, lint_backend, update_docs (all parallel)
+Time 1: lint_frontend completes
+Time 2: lint_backend completes, start run_tests
+Time 3: update_docs completes
+Time 4: run_tests completes, start build_release
+Time 5: build_release completes - workflow done!
+
+Sequential time: ~5 tasks = ~5 time units
+Parallel time: ~5 time units reduced to ~3-4 time units
+```
+
+#### Advanced Dependency Patterns
+
+##### Diamond Dependencies
+```toml
+[[tasks]]
+name = "analyze"
+prompt = "Analyze the codebase"
+depends_on = []
+
+[[tasks]]
+name = "plan_frontend"
+prompt = "Plan frontend improvements"
+depends_on = ["analyze"]
+
+[[tasks]]
+name = "plan_backend"
+prompt = "Plan backend improvements"
+depends_on = ["analyze"]
+
+[[tasks]]
+name = "create_roadmap"
+prompt = "Create unified roadmap"
+depends_on = ["plan_frontend", "plan_backend"]
+```
+
+##### Complex Workflows
+```toml
+# Parallel analysis phase
+[[tasks]]
+name = "security_scan"
+depends_on = []
+
+[[tasks]]
+name = "performance_audit"
+depends_on = []
+
+[[tasks]]
+name = "dependency_check"
+depends_on = []
+
+# Conditional fix phase
+[[tasks]]
+name = "fix_vulnerabilities"
+depends_on = ["security_scan"]
+on_failure = "escalate_security"
+
+[[tasks]]
+name = "optimize_bottlenecks"
+depends_on = ["performance_audit"]
+
+# Convergence point
+[[tasks]]
+name = "integration_test"
+depends_on = ["fix_vulnerabilities", "optimize_bottlenecks", "dependency_check"]
+```
+
+#### Resource Control (Future Enhancement)
+
+```toml
+# Task requiring exclusive execution
+[[tasks]]
+name = "database_migration"
+prompt = "Run database migrations"
+verify_command = "python manage.py migrate"
+exclusive = true  # Runs alone, no other tasks in parallel
+depends_on = ["backup_database"]
+
+# Task with specific resource requirements
+[[tasks]]
+name = "memory_intensive_task"
+prompt = "Process large dataset"
+verify_command = "python process_data.py"
+memory_required = 4096  # Requires 4GB RAM
+cpu_required = 2.0      # Requires 2 CPU cores
+```
+
+#### Configuration Reference
+
+**Settings:**
+- `max_parallel_tasks`: Maximum number of tasks to run concurrently (default: 4)
+- `enable_parallel`: Enable/disable parallel execution (default: true)
+
+**Task Fields:**
+- `depends_on`: List of task names this task depends on (default: [])
+- `priority`: Task scheduling priority (future feature)
+- `exclusive`: Task must run alone (future feature)
+- `cpu_required`: CPU cores required (future feature)
+- `memory_required`: Memory in MB required (future feature)
+
+#### When to Use Parallel Execution
+
+**Good Use Cases:**
+- Multiple independent analysis or linting tasks
+- Parallel test suites for different components
+- Independent documentation updates
+- Multi-module projects with separate build steps
+
+**Avoid Parallel When:**
+- Tasks modify the same files
+- Order is critical for correctness
+- System resources are limited
+- Tasks have complex interdependencies
+
+#### Debugging Parallel Execution
+
+```bash
+# See detailed execution flow
+prompter config.toml --verbose
+
+# Disable parallel for debugging
+prompter config.toml --no-parallel  # Coming soon
+
+# View task dependency graph
+prompter config.toml --show-graph  # Coming soon
+```
+
+> ⚡ **Performance Tip**: Parallel execution can reduce workflow time by 50-70% for projects with many independent tasks. The actual speedup depends on task dependencies and system resources.
+
+> ⚠️ **Important**: Tasks that modify the same files should not run in parallel. Use `depends_on` to ensure proper ordering when tasks share resources.
+
+### 5. Progress Visualization (New in v0.10.0)
+
+Prompter provides real-time progress visualization for parallel task execution, automatically adapting to your terminal capabilities.
+
+#### Display Modes
+
+**Rich Mode (Default)** - Full terminal UI with:
+- Live progress bars for running tasks
+- Task dependency visualization
+- Real-time status updates
+- Overall workflow progress and ETA
+- Color-coded task states
+
+**Simple Mode** - For CI/CD and basic terminals:
+- Timestamped status updates
+- ASCII progress indicators
+- Clean, parseable output
+- Final execution summary
+
+**No Progress Mode** - Silent operation for scripts and automation
+
+#### Usage
+
+```bash
+# Default - auto-detects terminal capabilities
+prompter config.toml
+
+# Force simple progress (good for CI/CD)
+prompter config.toml --simple-progress
+
+# Disable all progress output
+prompter config.toml --no-progress
+```
+
+#### Environment Control
+
+```bash
+# Force a specific display mode
+export PROMPTER_PROGRESS_MODE=rich    # Force rich display
+export PROMPTER_PROGRESS_MODE=simple  # Force simple display
+export PROMPTER_PROGRESS_MODE=none    # Disable progress
+
+# Example: GitHub Actions workflow
+- name: Run prompter tasks
+  run: prompter build.toml  # Automatically uses simple mode in CI
+```
+
+#### Terminal Compatibility
+
+The progress display automatically adapts to your environment:
+- **CI/CD**: Automatically uses simple mode (GitHub Actions, GitLab CI, Jenkins, etc.)
+- **SSH Sessions**: Falls back to simple mode if terminal doesn't support rich UI
+- **Windows**: Detects Windows Terminal for rich mode, uses simple for legacy console
+- **Pipes/Redirects**: Uses simple mode when output is piped
+
+> 💡 **Pro Tip**: The progress visualization is especially helpful for understanding complex dependency graphs and identifying bottlenecks in parallel execution.
+
 ## AI-Powered Project Analysis (New in v0.7.0)
 
 Prompter can now analyze your project using Claude and automatically generate a customized configuration file tailored to your specific codebase.
@@ -274,6 +519,10 @@ prompter config.toml --log-file debug.log
 
 # Combine debug mode with log file for comprehensive diagnostics
 prompter config.toml --debug --log-file debug.log
+
+# Progress display options (new in v0.10.0)
+prompter config.toml --simple-progress    # Use simple progress for CI/CD
+prompter config.toml --no-progress        # Disable progress display
 ```
 
 ### Common Use Cases

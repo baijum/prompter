@@ -5,9 +5,13 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+import anyio
+
 from prompter.config import PrompterConfig
 from prompter.constants import MAX_TASK_ITERATIONS
 from prompter.logging import get_logger, setup_logging
+from prompter.parallel_coordinator import ParallelTaskCoordinator
+from prompter.progress_display import ProgressDisplay, ProgressDisplayMode
 from prompter.runner import TaskRunner
 from prompter.state import StateManager
 
@@ -171,7 +175,7 @@ def execute_tasks(
     state_manager: StateManager,
     args: Any,
 ) -> int:
-    """Execute tasks with support for task jumping.
+    """Execute tasks with support for task jumping and parallel execution.
 
     Returns:
         0 if all tasks succeeded, 1 if any failed.
@@ -181,6 +185,108 @@ def execute_tasks(
     print(f"Running {len(tasks_to_run)} task(s)...")
     if args.dry_run:
         print("[DRY RUN MODE - No actual changes will be made]")
+
+    # Check if we should use parallel execution
+    use_parallel = (
+        config.enable_parallel
+        and config.has_dependencies()
+        and not args.task  # Don't use parallel for single task execution
+    )
+
+    if use_parallel:
+        logger.info("Using parallel execution due to task dependencies")
+        print(
+            f"\nParallel execution enabled (max {config.max_parallel_tasks} concurrent tasks)"
+        )
+        return execute_tasks_parallel(config, runner, state_manager, args)
+    logger.info("Using sequential execution")
+    if config.has_dependencies():
+        print("\nNote: Dependencies defined but parallel execution is disabled")
+    return execute_tasks_sequential(config, runner, tasks_to_run, state_manager, args)
+
+
+def execute_tasks_parallel(
+    config: PrompterConfig,
+    runner: TaskRunner,
+    state_manager: StateManager,
+    args: Any,
+) -> int:
+    """Execute tasks in parallel respecting dependencies.
+
+    Returns:
+        0 if all tasks succeeded, 1 if any failed.
+    """
+    logger = get_logger("cli")
+
+    # Determine progress display mode
+    if args.no_progress:
+        progress_mode = ProgressDisplayMode.NONE
+    elif args.simple_progress:
+        progress_mode = ProgressDisplayMode.SIMPLE
+    else:
+        progress_mode = ProgressDisplayMode.RICH
+
+    try:
+        # Create progress display if not disabled
+        progress_display = None
+        if progress_mode != ProgressDisplayMode.NONE:
+            progress_display = ProgressDisplay(
+                total_tasks=len(config.tasks),
+                max_parallel=config.max_parallel_tasks,
+                workflow_name=config.config_path.stem,
+                mode=progress_mode,
+            )
+
+        # Create parallel coordinator with progress display
+        coordinator = ParallelTaskCoordinator(
+            config=config,
+            runner=runner,
+            state_manager=state_manager,
+            dry_run=args.dry_run,
+            progress_display=progress_display,
+        )
+
+        # Execute all tasks with progress display context
+        if progress_display:
+            with progress_display:
+                results = anyio.run(coordinator.execute_all)
+        else:
+            results = anyio.run(coordinator.execute_all)
+
+        # Check for failures
+        failed_count = sum(1 for result in results.values() if not result.success)
+
+        # Print final status
+        print("\nFinal status:")
+        print_status(state_manager, args.verbose)
+
+        if failed_count > 0:
+            logger.info(
+                f"Parallel execution completed with {failed_count} failed tasks"
+            )
+            return 1
+        logger.info("All tasks completed successfully")
+        return 0
+
+    except Exception as e:
+        logger.exception("Error during parallel execution")
+        print(f"\nError during parallel execution: {e}")
+        return 1
+
+
+def execute_tasks_sequential(
+    config: PrompterConfig,
+    runner: TaskRunner,
+    tasks_to_run: list,
+    state_manager: StateManager,
+    args: Any,
+) -> int:
+    """Execute tasks sequentially with support for task jumping (original implementation).
+
+    Returns:
+        0 if all tasks succeeded, 1 if any failed.
+    """
+    logger = get_logger("cli")
 
     # Create a mapping of task names to tasks for jumping
     task_map = {task.name: task for task in config.tasks}

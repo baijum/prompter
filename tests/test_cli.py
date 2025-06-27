@@ -240,7 +240,18 @@ class TestMainFunction:
 
         mock_config = Mock()
         mock_config.validate.return_value = []
-        mock_config.tasks = [Mock(name="test_task")]
+        mock_task = Mock(
+            name="test_task",
+            depends_on=[],
+            on_success="next",
+            on_failure="stop",
+            prompt="Test prompt",
+            verify_command="echo test",
+        )
+        mock_config.tasks = [mock_task]
+        mock_config.enable_parallel = False
+        mock_config.has_dependencies.return_value = False
+        mock_config.get_task_by_name.return_value = mock_task
         mock_config_class.return_value = mock_config
 
         mock_runner = Mock()
@@ -284,7 +295,11 @@ class TestMainFunction:
         mock_task = Mock()
         mock_task.name = "failed_task"
         mock_task.on_failure = "stop"
+        mock_task.depends_on = []
         mock_config.tasks = [mock_task]
+        mock_config.enable_parallel = False
+        mock_config.has_dependencies.return_value = False
+        mock_config.get_task_by_name.return_value = mock_task
         mock_config_class.return_value = mock_config
 
         mock_runner = Mock()
@@ -363,7 +378,18 @@ verify_command = "make check"
 
         mock_config = Mock()
         mock_config.validate.return_value = []
-        mock_config.tasks = [Mock(name="test_task")]
+        mock_task = Mock(
+            name="test_task",
+            depends_on=[],
+            on_success="next",
+            on_failure="stop",
+            prompt="Test prompt",
+            verify_command="echo test",
+        )
+        mock_config.tasks = [mock_task]
+        mock_config.enable_parallel = False
+        mock_config.has_dependencies.return_value = False
+        mock_config.get_task_by_name.return_value = mock_task
         mock_config_class.return_value = mock_config
 
         mock_runner = Mock()

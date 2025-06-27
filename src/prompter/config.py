@@ -6,6 +6,7 @@ from typing import Any
 
 from .constants import DEFAULT_CHECK_INTERVAL
 from .logging import get_logger
+from .task_graph import CycleDetectedError, TaskGraph
 
 # Reserved action words that cannot be used as task names
 RESERVED_ACTIONS = {"next", "stop", "retry", "repeat"}
@@ -30,6 +31,15 @@ class TaskConfig:
         )
         self.system_prompt: str | None = config.get("system_prompt")
 
+        # Dependency management fields
+        self.depends_on: list[str] = config.get("depends_on", [])
+
+        # Resource requirement fields
+        self.cpu_required: float = config.get("cpu_required", 1.0)
+        self.memory_required: int = config.get("memory_required", 512)  # MB
+        self.priority: int = config.get("priority", 0)
+        self.exclusive: bool = config.get("exclusive", False)
+
     def __repr__(self) -> str:
         return f"TaskConfig(name='{self.name}')"
 
@@ -52,10 +62,15 @@ class PrompterConfig:
         self.working_directory: str | None = settings.get("working_directory")
         self.allow_infinite_loops: bool = settings.get("allow_infinite_loops", False)
 
+        # Parallel execution settings
+        self.max_parallel_tasks: int = settings.get("max_parallel_tasks", 4)
+        self.enable_parallel: bool = settings.get("enable_parallel", True)
+
         self.logger.debug(
             f"Configuration settings: check_interval={self.check_interval}s, "
             f"max_retries={self.max_retries}, working_directory={self.working_directory}, "
-            f"allow_infinite_loops={self.allow_infinite_loops}"
+            f"allow_infinite_loops={self.allow_infinite_loops}, "
+            f"max_parallel_tasks={self.max_parallel_tasks}, enable_parallel={self.enable_parallel}"
         )
 
         # Parse tasks
@@ -205,7 +220,59 @@ class PrompterConfig:
             else:
                 self.logger.debug(f"Task {i} ({task.name}) validation passed")
 
+        # Validate dependencies if any are defined
+        if self.has_dependencies():
+            self.logger.debug("Validating task dependencies")
+
+            # Check that all dependency references are valid
+            for task in self.tasks:
+                for dep in task.depends_on:
+                    if dep not in task_names:
+                        errors.append(
+                            f"Task '{task.name}' depends on unknown task '{dep}'"
+                        )
+
+            # Check for circular dependencies by building the graph
+            try:
+                self.build_task_graph()
+                self.logger.debug("Dependency graph validation passed")
+            except CycleDetectedError as e:
+                errors.append(f"Circular dependency detected: {e}")
+                self.logger.debug(f"Circular dependency detected: {e}")
+            except ValueError as e:
+                errors.append(f"Invalid dependency configuration: {e}")
+                self.logger.debug(f"Invalid dependency configuration: {e}")
+            except Exception as e:
+                errors.append(f"Error validating dependencies: {e}")
+                self.logger.debug(f"Error validating dependencies: {e}")
+
         self.logger.debug(
             f"Configuration validation complete: {len(errors)} errors found"
         )
         return errors
+
+    def build_task_graph(self) -> TaskGraph:
+        """Build a dependency graph from the configured tasks."""
+        self.logger.debug("Building task dependency graph")
+        graph = TaskGraph()
+
+        # Add all tasks to the graph
+        for task in self.tasks:
+            self.logger.debug(
+                f"Adding task '{task.name}' with dependencies: {task.depends_on}"
+            )
+            graph.add_task(name=task.name, task=task, dependencies=task.depends_on)
+
+        # Validate the graph structure
+        try:
+            graph.validate()
+            self.logger.debug("Task graph validation successful")
+        except Exception:
+            self.logger.exception("Task graph validation failed")
+            raise
+
+        return graph
+
+    def has_dependencies(self) -> bool:
+        """Check if any task has dependencies defined."""
+        return any(task.depends_on for task in self.tasks)

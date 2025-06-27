@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test test-unit test-integration coverage coverage-html lint type-check format format-check clean
+.PHONY: help install install-dev test test-unit test-integration test-slow test-fast coverage coverage-html coverage-unit lint type-check format format-check clean
 
 help:  ## Show this help message
 	@echo "Usage: make [target]"
@@ -15,11 +15,17 @@ install-dev:  ## Install the package with development dependencies
 test:  ## Run all tests
 	pytest
 
-test-unit:  ## Run unit tests only (exclude integration tests)
-	pytest -m "not integration"
+test-unit:  ## Run unit tests only (exclude integration and slow tests)
+	pytest -m "not integration and not slow"
 
 test-integration:  ## Run integration tests only
 	pytest -m integration
+
+test-slow:  ## Run slow tests only
+	pytest -m slow
+
+test-fast:  ## Run fast tests only (exclude slow tests)
+	pytest -m "not slow"
 
 coverage:  ## Run tests with coverage report
 	pytest --cov=src/prompter --cov-report=term --cov-report=html --cov-report=xml
@@ -31,6 +37,9 @@ coverage-html:  ## Run tests with coverage and open HTML report
 
 coverage-report:  ## Show coverage report in terminal
 	pytest --cov=src/prompter --cov-report=term-missing
+
+coverage-unit:  ## Run unit tests with coverage (exclude integration and slow tests)
+	pytest -m "not integration and not slow" --cov=src/prompter --cov-report=term-missing
 
 lint:  ## Run linting checks
 	ruff check .

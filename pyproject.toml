@@ -27,6 +27,7 @@ dependencies = [
     "claude-code-sdk @ git+https://github.com/baijum/claude-code-sdk-python.git@main",
     "tomli-w>=1.0.0",
     "anyio>=4.0.0",
+    "rich>=13.0.0",
 ]
 
 [project.urls]

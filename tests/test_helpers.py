@@ -111,6 +111,27 @@ class TaskResultBuilder:
         )
 
 
+def create_task_config(
+    name: str = "test_task",
+    prompt: str = "Test prompt",
+    verify_command: str = "echo ok",
+    depends_on: list[str] | None = None,
+    **kwargs,
+) -> TaskConfig:
+    """Create a TaskConfig object for testing."""
+    config_dict = {
+        "name": name,
+        "prompt": prompt,
+        "verify_command": verify_command,
+        "depends_on": depends_on or [],
+    }
+
+    # Add any additional kwargs
+    config_dict.update(kwargs)
+
+    return TaskConfig(config_dict)
+
+
 def create_mock_config(tasks: list = None, **settings) -> Mock:
     """Create a mock PrompterConfig object."""
     config = Mock(spec=PrompterConfig)

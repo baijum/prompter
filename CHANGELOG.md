@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 🐛 Bug Fixes
+
+- **Shell Command Support in `verify_command`**
+  - Fixed issue where verification commands with shell features (pipes, redirections, etc.) would fail
+  - Automatically detects when shell interpretation is needed for commands containing:
+    - Pipes (`|`)
+    - Redirections (`>`, `<`, `>>`)
+    - Command operators (`&&`, `||`, `;`)
+    - Variable expansion (`$`, `` ` ``)
+    - Glob patterns (`*`, `?`, `[`, `]`)
+  - Maintains backward compatibility - simple commands continue to run without shell
+  - Resolves the "git: 'diff|grep' is not a git command" error
+
+- **Enhanced JSON Error Handling**
+  - Implemented retry logic with progressive delays for Claude SDK JSON decoding errors
+  - Added adaptive delays: 5s, 10s, 15s (max 30s) after JSON errors vs 3s for other errors
+  - JSON-specific error detection and handling in `_execute_claude_prompt`
+  - Added garbage collection between retries to help with resource cleanup
+  - **NEW**: Proper ExceptionGroup handling for Python 3.11+ wrapped exceptions
+  - **NEW**: Enhanced error detection with `_contains_json_error()` method
+  - **NEW**: Detailed error extraction with `_extract_json_error_details()` for better diagnostics
+  - Properly detects JSON errors wrapped in "unhandled errors in a TaskGroup"
+  - Mitigates "Unterminated string starting at: line 1 column 131" errors
+
+### 📚 Documentation
+
+- Added comprehensive documentation for shell command support in README.md
+- Provided examples of both simple and complex shell commands
+
+### 🧪 Testing
+
+- Added extensive test coverage for shell command scenarios
+- New test file `test_shell_commands.py` with 20 test cases covering various shell features
+- All existing tests pass with the workarounds in place
+
 ## [0.9.0] - 2025-06-27
 
 ### 🚀 New Features

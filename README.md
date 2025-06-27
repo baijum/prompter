@@ -676,6 +676,53 @@ timeout = 300
 - `system_prompt`: Custom system prompt for Claude (optional). Use this to influence Claude's behavior for specific tasks, such as enforcing planning before execution
 - `resume_previous_session`: Resume from previous task's Claude session (default: false)
 
+#### Shell Command Support in verify_command
+
+The `verify_command` field supports both simple commands and complex shell operations:
+
+**Simple Commands** (executed directly without shell):
+```toml
+verify_command = "python -m pytest"
+verify_command = "make test"
+verify_command = "cargo check"
+```
+
+**Shell Commands** (automatically detected and executed with shell):
+```toml
+# Pipes
+verify_command = "git diff | grep -E 'TODO|FIXME'"
+verify_command = "ps aux | grep python | wc -l"
+
+# Output redirection
+verify_command = "python script.py > output.log 2>&1"
+verify_command = "echo 'test complete' >> results.txt"
+
+# Command chaining
+verify_command = "make clean && make build && make test"
+verify_command = "npm install || npm ci"
+
+# Variable substitution
+verify_command = "echo \"Build completed at $(date)\""
+verify_command = "test -f /tmp/done_${USER}.flag"
+
+# Glob patterns
+verify_command = "ls *.py | wc -l"
+verify_command = "rm -f *.tmp *.log"
+
+# Complex shell scripts
+verify_command = "if [ -f config.json ]; then echo 'Config exists'; else exit 1; fi"
+verify_command = "for f in *.test; do python $f || exit 1; done"
+```
+
+Prompter automatically detects when shell features are needed by looking for:
+- Pipes (`|`)
+- Redirections (`>`, `<`, `>>`)
+- Command operators (`&&`, `||`, `;`)
+- Variable expansion (`$`, `` ` ``)
+- Glob patterns (`*`, `?`, `[`, `]`)
+
+This ensures backward compatibility while enabling advanced shell scripting capabilities.
+
 ##### Important: How `on_failure` and `max_attempts` Work Together
 
 The interaction between `on_failure` and `max_attempts` depends on the `on_failure` value:

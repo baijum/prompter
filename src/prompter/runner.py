@@ -48,6 +48,69 @@ class TaskRunner:
         )
         self.logger = get_logger("runner")
 
+    def _contains_json_error(self, exception: Exception) -> bool:
+        """Check if an exception or its nested exceptions contain JSON decode errors."""
+        # Check the exception itself
+        error_str = str(exception)
+        error_type = type(exception).__name__
+
+        json_error_indicators = [
+            "JSONDecodeError",
+            "CLIJSONDecodeError",
+            "Failed to decode JSON",
+            "Unterminated string starting at",
+            "json.decoder.JSONDecodeError",
+        ]
+
+        # Check if this is a direct JSON error
+        if any(
+            indicator in error_str or indicator in error_type
+            for indicator in json_error_indicators
+        ):
+            return True
+
+        # Handle ExceptionGroup (Python 3.11+)
+        if hasattr(
+            exception, "exceptions"
+        ):  # ExceptionGroup has 'exceptions' attribute
+            for sub_exception in exception.exceptions:
+                if self._contains_json_error(sub_exception):
+                    return True
+
+        # Handle exception with __cause__ chain
+        if exception.__cause__:
+            return self._contains_json_error(exception.__cause__)
+
+        return False
+
+    def _extract_json_error_details(self, exception: Exception) -> str:
+        """Extract detailed JSON error information from nested exceptions."""
+        details = []
+
+        # Direct error info
+        details.append(
+            f"Main error: {type(exception).__name__}: {str(exception)[:300]}"
+        )
+
+        # Extract from ExceptionGroup
+        if hasattr(exception, "exceptions"):
+            for i, sub_exc in enumerate(exception.exceptions):
+                details.append(
+                    f"  Sub-exception {i + 1}: {type(sub_exc).__name__}: {str(sub_exc)[:300]}"
+                )
+                if hasattr(sub_exc, "__cause__") and sub_exc.__cause__:
+                    details.append(
+                        f"    Caused by: {type(sub_exc.__cause__).__name__}: {str(sub_exc.__cause__)[:300]}"
+                    )
+
+        # Extract from cause chain
+        if exception.__cause__:
+            details.append(
+                f"Caused by: {type(exception.__cause__).__name__}: {str(exception.__cause__)[:300]}"
+            )
+
+        return "\n".join(details)
+
     def run_task(self, task: TaskConfig, state_manager: Any = None) -> TaskResult:
         """Execute a single task."""
         self.logger.info(f"Starting task: {task.name}")
@@ -65,8 +128,33 @@ class TaskRunner:
 
         attempts = 0
         verify_result = (False, "")  # Initialize to avoid locals() check
+        last_error_was_json = False  # Track JSON errors for adaptive delays
+
         while attempts < task.max_attempts:
             attempts += 1
+
+            # Add delay between retry attempts to help with JSON errors
+            if attempts > 1:
+                if last_error_was_json:
+                    # Longer delay after JSON errors (5s, 10s, 15s... max 30s)
+                    delay = min(attempts * 5, 30)
+                    self.logger.warning(
+                        f"Waiting {delay}s before retry due to previous JSON error "
+                        f"(attempt {attempts}/{task.max_attempts})"
+                    )
+                else:
+                    # Standard retry delay
+                    delay = 3
+                    self.logger.debug(
+                        f"Waiting {delay}s before retry (attempt {attempts}/{task.max_attempts})"
+                    )
+                time.sleep(delay)
+
+                # Force garbage collection to clean up resources
+                import gc
+
+                gc.collect()
+
             self.logger.debug(
                 f"Task {task.name} attempt {attempts}/{task.max_attempts}"
             )
@@ -92,7 +180,19 @@ class TaskRunner:
             )
 
             if not claude_result[0]:
+                # Check if this was a JSON error
+                error_msg = str(claude_result[1])
+                last_error_was_json = (
+                    "JSON" in error_msg
+                    or "json" in error_msg
+                    or "JSONDecodeError" in error_msg
+                    or "CLIJSONDecodeError" in error_msg
+                    or "Unterminated string starting at" in error_msg
+                    or "unhandled errors in a TaskGroup" in error_msg
+                )
+
                 self.logger.debug(f"Claude execution failed: {claude_result[1]}")
+
                 if attempts >= task.max_attempts:
                     return TaskResult(
                         task.name,
@@ -177,29 +277,66 @@ class TaskRunner:
     def _execute_claude_prompt(
         self, task: TaskConfig, resume_session_id: str | None = None
     ) -> tuple[bool, str, str | None]:
-        """Execute a Claude Code prompt using SDK."""
-        try:
-            self.logger.debug("Creating asyncio event loop for Claude SDK execution")
-            # Run the async query in a synchronous context
-            result = asyncio.run(
-                self._execute_claude_prompt_async(task, resume_session_id)
-            )
-            self.logger.debug(
-                f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
-            )
-            return result
-        except TimeoutError:
-            self.logger.exception(
-                f"Claude SDK task timed out after {task.timeout} seconds"
-            )
-            return (
-                False,
-                f"Claude SDK task timed out after {task.timeout} seconds",
-                None,
-            )
-        except Exception as e:
-            self.logger.exception("Error executing Claude SDK task")
-            return False, f"Error executing Claude SDK task: {e}", None
+        """Execute a Claude Code prompt using SDK with JSON error handling."""
+        json_retry_count = 0
+        max_json_retries = 3
+
+        while json_retry_count < max_json_retries:
+            try:
+                if json_retry_count > 0:
+                    self.logger.warning(
+                        f"Retrying after JSON error (attempt {json_retry_count + 1}/{max_json_retries}), "
+                        f"waiting {json_retry_count * 2}s..."
+                    )
+                    time.sleep(json_retry_count * 2)
+
+                    # Force cleanup before retry
+                    import gc
+
+                    gc.collect()
+
+                self.logger.debug(
+                    "Creating asyncio event loop for Claude SDK execution"
+                )
+                # Run the async query in a synchronous context
+                result = asyncio.run(
+                    self._execute_claude_prompt_async(task, resume_session_id)
+                )
+                self.logger.debug(
+                    f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
+                )
+                return result
+
+            except TimeoutError:
+                self.logger.exception(
+                    f"Claude SDK task timed out after {task.timeout} seconds"
+                )
+                return (
+                    False,
+                    f"Claude SDK task timed out after {task.timeout} seconds",
+                    None,
+                )
+            except Exception as e:
+                # Check if this is a JSON-related error using our helper
+                if self._contains_json_error(e):
+                    json_retry_count += 1
+                    error_details = self._extract_json_error_details(e)
+
+                    if json_retry_count < max_json_retries:
+                        self.logger.warning(
+                            f"JSON decoding error detected (attempt {json_retry_count}/{max_json_retries}):\n"
+                            f"{error_details}\n"
+                            f"Will retry after {json_retry_count * 2}s..."
+                        )
+                        continue
+                    self.logger.exception(
+                        f"JSON error persists after {max_json_retries} retries:\n{error_details}"
+                    )
+
+                self.logger.exception("Error executing Claude SDK task")
+                return False, f"Error executing Claude SDK task: {e}", None
+
+        return False, f"Failed after {max_json_retries} JSON retry attempts", None
 
     async def _execute_claude_prompt_async(
         self, task: TaskConfig, resume_session_id: str | None = None
@@ -261,21 +398,73 @@ class TaskRunner:
     def _verify_task(self, task: TaskConfig) -> tuple[bool, str]:
         """Verify that a task completed successfully."""
         try:
-            # Execute the verification command
-            # Parse the command properly to avoid shell injection
-            cmd_args = shlex.split(task.verify_command)
-
-            # Security: subprocess.run with user input requires careful handling
-            # Since verification commands come from config files (trusted source),
-            # and we're using shlex.split to parse them safely, this is acceptable
-            result = subprocess.run(
-                cmd_args,
-                check=False,
-                cwd=self.current_directory,
-                capture_output=True,
-                text=True,
-                timeout=DEFAULT_VERIFICATION_TIMEOUT,
+            # Detect if command requires shell interpretation
+            shell_indicators = [
+                "|",
+                ">",
+                "<",
+                ">>",
+                "&&",
+                "||",
+                ";",
+                "$",
+                "`",
+                "*",
+                "?",
+                "[",
+                "]",
+            ]
+            needs_shell = any(
+                indicator in task.verify_command for indicator in shell_indicators
             )
+
+            if needs_shell:
+                self.logger.debug(
+                    f"Shell features detected in command: {task.verify_command[:100]}... "
+                    f"Using shell mode for execution."
+                )
+
+                # Use shell mode for commands with shell features
+                # Security note: Commands come from trusted config files, not user input
+                result = subprocess.run(
+                    task.verify_command,
+                    shell=True,
+                    check=False,
+                    cwd=self.current_directory,
+                    capture_output=True,
+                    text=True,
+                    timeout=DEFAULT_VERIFICATION_TIMEOUT,
+                )
+            else:
+                # Parse the command for simple execution
+                try:
+                    cmd_args = shlex.split(task.verify_command)
+                except ValueError as e:
+                    # Handle cases where shlex.split fails (e.g., unmatched quotes)
+                    self.logger.warning(
+                        f"Failed to parse command with shlex: {e}. "
+                        f"Falling back to shell mode."
+                    )
+                    # Fall back to shell mode if parsing fails
+                    result = subprocess.run(
+                        task.verify_command,
+                        shell=True,
+                        check=False,
+                        cwd=self.current_directory,
+                        capture_output=True,
+                        text=True,
+                        timeout=DEFAULT_VERIFICATION_TIMEOUT,
+                    )
+                else:
+                    # Execute without shell for simple commands
+                    result = subprocess.run(
+                        cmd_args,
+                        check=False,
+                        cwd=self.current_directory,
+                        capture_output=True,
+                        text=True,
+                        timeout=DEFAULT_VERIFICATION_TIMEOUT,
+                    )
 
             success = result.returncode == task.verify_success_code
             output = f"Exit code: {result.returncode}\\nStdout: {result.stdout}\\nStderr: {result.stderr}"

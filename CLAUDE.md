@@ -21,7 +21,7 @@ This project requires Python 3.11 or higher.
    pip install -e ".[dev]"
    ```
 
-**Note**: The Claude Code SDK dependency is installed from the Git repository (baijum/claude-code-sdk-python) rather than PyPI to ensure access to the latest updates and bug fixes.
+**Note**: The Claude Code SDK dependency is installed from the Git repository (baijum/claude-code-sdk-python) rather than PyPI to ensure access to the latest updates and bug fixes. This means that PyPI publishing is not available for versions after v0.9.1, and users should install from GitHub instead.
 
 **Dependencies**: The project uses `anyio` (>=4.0.0) for async operations, providing cross-platform compatibility with different async backends.
 
@@ -78,6 +78,12 @@ pytest -v
 
 # Run only unit tests (excluding integration)
 pytest -m "not integration"
+
+# Run only unit tests
+pytest -m unit
+
+# Run only integration tests
+pytest -m integration
 ```
 
 **Test Structure:**

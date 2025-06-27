@@ -29,9 +29,23 @@ Install from PyPI:
 pip install claude-code-prompter
 ```
 
+Or install from GitHub for the latest features:
+
+```bash
+# Install the latest release
+pip install git+https://github.com/baijum/prompter.git
+
+# Install a specific version
+pip install git+https://github.com/baijum/prompter.git@v0.9.2
+```
+
 Or install from source:
 
 ```bash
+# Clone the repository
+git clone https://github.com/baijum/prompter.git
+cd prompter
+
 # Install the package
 pip install -e .
 

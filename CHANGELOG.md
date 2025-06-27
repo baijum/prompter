@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2025-06-27
+
+### 📚 Documentation
+
+- **Updated Installation Instructions**
+  - Added GitHub installation options to README
+  - Clarified that PyPI package uses standard Claude Code SDK dependency
+  - Provided multiple installation methods for user convenience
+  - This is a PyPI-compatible release branch for users who need PyPI installation
+
+### 🔧 Maintenance
+
+- Created rel_0.9 branch for PyPI-compatible releases
+- Maintains compatibility with PyPI by using standard SDK dependency
+
 ## [0.9.1] - 2025-06-27
 
 ### 🐛 Bug Fixes

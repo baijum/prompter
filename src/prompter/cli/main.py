@@ -341,6 +341,10 @@ def execute_tasks_sequential(
         # Execute the task and handle its result
         result = execute_single_task(runner, task, state_manager)
 
+        # Print session ID if available
+        if result.session_id:
+            print(f"  Claude session: {result.session_id}")
+
         # Handle the task result and determine next action
         current_task_idx = handle_task_result(
             result,

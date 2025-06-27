@@ -250,9 +250,12 @@ class ParallelTaskCoordinator:
 
             if result.success:
                 self.task_states[task.name].status = TaskStatus.COMPLETED
+                session_info = (
+                    f" (session: {result.session_id})" if result.session_id else ""
+                )
                 self.logger.info(
                     f"Task {task.name} completed successfully in "
-                    f"{self.task_states[task.name].duration:.2f}s"
+                    f"{self.task_states[task.name].duration:.2f}s{session_info}"
                 )
 
                 # Update progress: task completed
@@ -265,7 +268,12 @@ class ParallelTaskCoordinator:
                     )
             else:
                 self.task_states[task.name].status = TaskStatus.FAILED
-                self.logger.error(f"Task {task.name} failed: {result.error}")
+                session_info = (
+                    f" (session: {result.session_id})" if result.session_id else ""
+                )
+                self.logger.error(
+                    f"Task {task.name} failed{session_info}: {result.error}"
+                )
 
                 # Update progress: task failed
                 if self.progress_display:

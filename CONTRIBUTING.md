@@ -42,6 +42,8 @@ This project follows a standard code of conduct. Please be respectful and constr
 
 ### Environment Setup
 
+> **Note**: Starting from v0.9.2, the Claude Code SDK is installed from a Git repository instead of PyPI. This ensures you get the latest SDK updates and bug fixes immediately.
+
 1. **Create and activate a virtual environment**:
    ```bash
    python3.11 -m venv venv

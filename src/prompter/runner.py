@@ -381,9 +381,6 @@ class TaskRunner:
             session_id = None
 
             for msg in messages:
-                # Debug: log message type
-                self.logger.debug(f"Received message type: {type(msg).__name__}")
-
                 # Check if this is a ResultMessage to extract session_id
                 if isinstance(msg, ResultMessage):
                     session_id = msg.session_id
@@ -401,9 +398,6 @@ class TaskRunner:
                         if hasattr(content, "text"):
                             output_text += content.text + "\n"
 
-            self.logger.debug(
-                f"Claude execution summary: got_text={bool(output_text.strip())}, session_id={session_id}"
-            )
             if output_text.strip():
                 return True, output_text.strip(), session_id
             return False, "Claude SDK returned empty response", session_id

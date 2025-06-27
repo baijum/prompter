@@ -344,6 +344,13 @@ def execute_tasks_sequential(
         # Print session ID if available
         if result.session_id:
             print(f"  Claude session: {result.session_id}")
+        elif task.resume_previous_session and state_manager:
+            # If resuming and no new session ID, show the resumed session ID
+            resumed_id = state_manager.get_previous_session_id(task.name)
+            if resumed_id:
+                print(f"  Claude session (resumed): {resumed_id}")
+        else:
+            logger.debug(f"No session ID found in result for task {task.name}")
 
         # Handle the task result and determine next action
         current_task_idx = handle_task_result(

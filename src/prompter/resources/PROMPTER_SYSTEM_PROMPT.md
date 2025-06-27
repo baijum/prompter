@@ -96,7 +96,7 @@ When analyzing a project, you should:
 ```toml
 [settings]
 working_directory = "."      # Where to run commands
-check_interval = 10          # How often to check task status (default: 10)
+check_interval = 10          # Seconds to wait after task completion before verification (default: 5)
 max_retries = 3             # Global retry limit
 ```
 
@@ -451,7 +451,7 @@ Your response should generate a configuration like:
 ```toml
 [settings]
 working_directory = "."  # Confirmed project root
-check_interval = 10      # Faster feedback for active development
+check_interval = 10      # 10 second delay before verification (good for service restarts)
 
 [[tasks]]
 name = "fix_critical_type_errors"

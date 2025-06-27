@@ -19,7 +19,7 @@ def sample_config() -> dict[str, Any]:
     """Sample configuration data for testing."""
     return {
         "settings": {
-            "check_interval": 3600,
+            "check_interval": 10,  # 10 seconds for tests
             "max_retries": 3,
         },
         "tasks": [
@@ -50,7 +50,7 @@ def sample_config() -> dict[str, Any]:
 def sample_toml_config(temp_dir, sample_config) -> Path:
     """Create a sample TOML configuration file."""
     config_content = """[settings]
-check_interval = 3600
+check_interval = 10  # 10 seconds for tests
 max_retries = 3
 
 [[tasks]]
@@ -82,7 +82,7 @@ timeout = 600
 def invalid_toml_config(temp_dir) -> Path:
     """Create an invalid TOML configuration file."""
     config_content = """[settings]
-check_interval = 3600
+check_interval = 10  # 10 seconds for tests
 
 [[tasks]]
 # Missing required fields

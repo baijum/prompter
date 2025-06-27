@@ -3,7 +3,7 @@
 
 [settings]
 working_directory = "."
-check_interval = 5
+check_interval = 5   # Quick 5 second delay - security tools run fast
 max_retries = 2
 
 [[tasks]]

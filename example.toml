@@ -2,8 +2,10 @@
 # This demonstrates how to configure sequential prompts for code tidying tasks
 
 [settings]
-# How long to wait (in seconds) before verifying task completion
-check_interval = 3600  # 1 hour
+# Delay (in seconds) between when Claude finishes a task and when we verify it succeeded.
+# Most tasks complete instantly, so a short delay is usually fine.
+# Increase this for tasks that need time to initialize (e.g., service restarts).
+check_interval = 10  # 10 seconds should be enough for most tasks
 
 # Maximum number of retries for failed tasks
 max_retries = 3

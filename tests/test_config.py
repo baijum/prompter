@@ -77,7 +77,7 @@ class TestPrompterConfig:
         config = PrompterConfig(sample_toml_config)
 
         # Check settings
-        assert config.check_interval == 3600
+        assert config.check_interval == 10  # Value from test fixture
         assert config.max_retries == 3
         assert config.working_directory is None
 
@@ -115,7 +115,7 @@ verify_command = "echo ok"
         config = PrompterConfig(config_file)
 
         # Check defaults
-        assert config.check_interval == 3600
+        assert config.check_interval == 5  # Default from constants.py
         assert config.max_retries == 3
         assert config.working_directory is None
 
@@ -143,7 +143,7 @@ verify_command = "echo ok"
     def test_validate_config_with_no_tasks(self, temp_dir):
         """Test validation of configuration with no tasks."""
         empty_config = """[settings]
-check_interval = 3600
+check_interval = 10
 """
         config_file = temp_dir / "empty.toml"
         config_file.write_text(empty_config)

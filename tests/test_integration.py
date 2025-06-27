@@ -312,7 +312,7 @@ verify_command = "echo success"
         """Test configuration validation in full workflow."""
         # Create invalid config
         invalid_config = """[settings]
-check_interval = 3600
+check_interval = 10
 
 [[tasks]]
 name = ""

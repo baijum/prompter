@@ -3,7 +3,7 @@
 
 [settings]
 working_directory = "."
-check_interval = 60  # 1 minute between checks
+check_interval = 60  # Wait 60 seconds after deployment before verification (services need time to start)
 
 # Pre-deployment Checks
 [[tasks]]

@@ -189,6 +189,54 @@ resume_previous_session = true  # Understands what was attempted and why it fail
 
 > 💡 **Pro Tip**: Session resumption is particularly powerful for complex, multi-step workflows where Claude needs to maintain understanding of your codebase architecture, previous decisions, and implementation details across tasks.
 
+### Task Execution and Verification Timing
+
+#### Understanding `check_interval`
+
+The `check_interval` setting controls the delay between when Claude Code finishes executing a task and when Prompter runs the verification command. This is **NOT** a periodic check - it's a one-time pause.
+
+**Execution Flow:**
+1. Claude Code executes your task (e.g., "fix all linting errors")
+2. Claude Code completes and returns control to Prompter
+3. **Prompter waits for `check_interval` seconds**
+4. Prompter runs your `verify_command` to check if the task succeeded
+5. Based on the verification result, Prompter continues with the next task or retries
+
+**When to use non-zero `check_interval`:**
+- **Service restarts**: If your task restarts a service that takes time to fully initialize
+- **File system operations**: When dealing with network file systems or sync operations
+- **External processes**: If your task triggers external processes that run asynchronously
+- **Database migrations**: When changes need time to propagate
+
+**Example scenarios:**
+```toml
+# Fast operations - no delay needed
+[[tasks]]
+name = "fix_syntax_errors"
+verify_command = "python -m py_compile src/"
+# No check_interval needed - compilation is instant
+
+# Service restart - needs initialization time
+[[tasks]]
+name = "update_service_config"
+prompt = "Update the nginx configuration for the new API endpoints"
+verify_command = "curl -f http://localhost/health"
+# In settings: check_interval = 10  # Give nginx 10 seconds to restart
+
+# File sync operation
+[[tasks]]
+name = "deploy_to_shared_drive"
+prompt = "Copy built artifacts to the deployment folder"
+verify_command = "test -f /mnt/shared/deploy/app.jar"
+# In settings: check_interval = 5  # Allow time for network sync
+```
+
+**Best Practices:**
+- Use `check_interval = 0` (or omit it) for most tasks - they complete instantly
+- Only add a delay when you know the task needs time before verification
+- Keep delays as short as possible - just enough for the operation to complete
+- Consider using shorter intervals (5-30 seconds) rather than the default
+
 ### 4. Parallel Task Execution (New in v0.10.0)
 
 Prompter now supports parallel execution of independent tasks, dramatically reducing workflow execution time for complex projects. Tasks with dependencies are executed in the correct order while independent tasks run concurrently.
@@ -639,7 +687,7 @@ prompter config.toml
 ```toml
 [settings]
 working_directory = "/path/to/project"
-check_interval = 30
+check_interval = 30  # Wait 30 seconds after task execution before verification
 max_retries = 3
 
 # Task that stops on failure (max_attempts is ignored)
@@ -1001,7 +1049,7 @@ Create a TOML configuration file with your tasks:
 
 ```toml
 [settings]
-check_interval = 30
+check_interval = 30      # Wait 30 seconds after Claude completes before verifying
 max_retries = 3
 working_directory = "/path/to/project"
 
@@ -1020,7 +1068,7 @@ timeout = 300
 
 #### Settings (Optional)
 - `working_directory`: Base directory for command execution (default: current directory)
-- `check_interval`: Seconds to wait between task completion and verification (default: 3600)
+- `check_interval`: Seconds to wait AFTER Claude Code finishes executing a task and BEFORE running the verification command. This is a one-time delay, not a periodic check. For example, if set to 60, Prompter will wait 60 seconds after Claude completes the task before checking if it succeeded. Useful for tasks that need time to fully complete (e.g., service restarts, file system syncs). (default: 5 seconds)
 - `max_retries`: Global retry limit for all tasks (default: 3)
 - `allow_infinite_loops`: Allow tasks to execute multiple times in the same run (default: false)
 

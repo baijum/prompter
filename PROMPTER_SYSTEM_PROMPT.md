@@ -142,7 +142,7 @@ prompter --dry-run workflow.toml
 ```toml
 [settings]
 working_directory = "."  # CHANGE ME: Set project root
-check_interval = 15      # Faster feedback than default
+check_interval = 15      # Wait 15 seconds after task completes before verification
 
 [[tasks]]
 name = "task_identifier"

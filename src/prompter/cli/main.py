@@ -1,5 +1,6 @@
 """Main orchestration logic for the prompter CLI."""
 
+import os
 import sys
 import tomllib
 from pathlib import Path
@@ -301,15 +302,20 @@ def execute_tasks_sequential(
     current_task_idx = 0
     tasks_list = tasks_to_run
 
+    # Get max iterations from environment variable or use default
+    max_iterations = int(
+        os.environ.get("PROMPTER_MAX_ITERATIONS", str(MAX_TASK_ITERATIONS))
+    )
+
     while current_task_idx < len(tasks_list):
         # Safety check for runaway loops even when infinite loops are allowed
         iteration_count += 1
-        if iteration_count > MAX_TASK_ITERATIONS:
+        if iteration_count > max_iterations:
             logger.error(
-                f"Maximum iteration limit ({MAX_TASK_ITERATIONS}) reached. Stopping to prevent runaway loop."
+                f"Maximum iteration limit ({max_iterations}) reached. Stopping to prevent runaway loop."
             )
             print(
-                f"\nError: Maximum iteration limit ({MAX_TASK_ITERATIONS}) reached. Stopping execution."
+                f"\nError: Maximum iteration limit ({max_iterations}) reached. Stopping execution."
             )
             break
 

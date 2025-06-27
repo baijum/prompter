@@ -88,7 +88,13 @@ on_success = "build"     # Retry build after fixing
 ```
 
 > ⚠️ **Warning: Infinite Loop Protection**
-> When using task jumping, be careful not to create infinite loops. Prompter automatically detects and prevents infinite loops by tracking executed tasks. If a task tries to execute twice in the same run, it will be skipped with a warning. Always ensure your task flows have a clear termination condition.
+> When using task jumping, be careful not to create infinite loops. Prompter has multiple safeguards to prevent infinite loops:
+>
+> 1. **Executed Tasks Tracking**: By default, each task can only execute once per run. If a task tries to execute again, it will be skipped with a warning.
+> 2. **Maximum Iteration Limit**: Even with loops enabled, execution stops after 1000 iterations (configurable via `PROMPTER_MAX_ITERATIONS`) to prevent runaway loops.
+> 3. **Allow Infinite Loops Setting**: Set `allow_infinite_loops = true` to intentionally allow tasks to repeat (still limited by the maximum iteration limit).
+>
+> Always ensure your task flows have a clear termination condition.
 
 ### 3. Session Resumption (Context Preservation)
 Tasks can resume from previous Claude sessions, maintaining full context across multiple steps. This is essential for complex workflows where later tasks need to understand what was done in earlier tasks.
@@ -863,6 +869,18 @@ on_failure = "retry_task" # Retry on failure
 max_attempts = 1          # Important: limits retries per execution
 ```
 
+**Special Case - The "repeat" Action:**
+The `"repeat"` action is handled differently from jumping to a task by name:
+```toml
+[[tasks]]
+name = "continuous_check"
+prompt = "Check system status and log results"
+verify_command = "echo 'Check complete'"
+on_success = "repeat"     # Special action that removes task from executed_tasks
+on_failure = "stop"
+```
+When `on_success = "repeat"`, the task is removed from the executed tasks set, allowing immediate re-execution without needing `allow_infinite_loops = true`. This is useful for tasks that need to run continuously until a failure occurs.
+
 **Loop Protection:** By default, Prompter prevents infinite loops by tracking which tasks have been executed. If a task attempts to run twice in the same session, it will be skipped with a warning log.
 
 **Allowing Infinite Loops:** For use cases like continuous monitoring or polling, you can enable infinite loops:
@@ -885,7 +903,87 @@ verify_command = "sleep 60"
 on_success = "monitor"  # Loop back to monitoring
 ```
 
-When `allow_infinite_loops = true`, tasks can execute multiple times. A safety limit of 1000 iterations prevents runaway loops.
+When `allow_infinite_loops = true`, tasks can execute multiple times. A safety limit of 1000 iterations (configurable via `PROMPTER_MAX_ITERATIONS` environment variable) prevents runaway loops.
+
+#### When to Use Loops in Workflows
+
+Loops can be powerful for certain use cases:
+
+**1. Continuous Monitoring:**
+```toml
+[settings]
+allow_infinite_loops = true
+
+[[tasks]]
+name = "monitor_service"
+prompt = "Check if the service is healthy and restart if needed"
+verify_command = "systemctl is-active myservice"
+on_success = "wait_and_repeat"
+on_failure = "restart_service"
+
+[[tasks]]
+name = "wait_and_repeat"
+prompt = "Wait 60 seconds before next check"
+verify_command = "sleep 60"
+on_success = "monitor_service"  # Loop back
+```
+
+**2. Incremental Processing:**
+```toml
+[[tasks]]
+name = "process_batch"
+prompt = "Process the next batch of files"
+verify_command = "test -f batch_complete.flag"
+on_success = "check_more_batches"
+on_failure = "retry"
+
+[[tasks]]
+name = "check_more_batches"
+prompt = "Check if more batches need processing"
+verify_command = "test -f more_batches.flag"
+on_success = "process_batch"  # Loop back if more work
+on_failure = "stop"           # Exit if no more batches
+```
+
+**3. Retry Until Success:**
+```toml
+[[tasks]]
+name = "wait_for_deployment"
+prompt = "Check if deployment is complete"
+verify_command = "curl -f https://staging.example.com/health"
+on_success = "run_tests"
+on_failure = "wait_and_retry"
+
+[[tasks]]
+name = "wait_and_retry"
+prompt = "Wait 30 seconds before checking again"
+verify_command = "sleep 30"
+on_success = "wait_for_deployment"  # Loop back
+```
+
+**4. Iterative Improvements:**
+```toml
+[[tasks]]
+name = "optimize_performance"
+prompt = "Run performance profiler and optimize the slowest function"
+verify_command = "python benchmark.py --check-threshold"
+on_success = "check_more_optimizations"
+on_failure = "retry"
+
+[[tasks]]
+name = "check_more_optimizations"
+prompt = "Check if more optimizations are needed"
+verify_command = "python benchmark.py --needs-optimization"
+on_success = "optimize_performance"  # Loop back if needed
+on_failure = "stop"                  # Exit if performance is good
+```
+
+**Important Considerations:**
+- Always include a clear exit condition to prevent infinite execution
+- Use `allow_infinite_loops = true` for intentional continuous workflows
+- The default 1000-iteration limit provides a safety net even with loops enabled (configurable via `PROMPTER_MAX_ITERATIONS`)
+- Consider using `on_success = "repeat"` for simple continuous tasks
+- Design loops with proper wait/sleep tasks to avoid excessive resource usage
 
 #### Multiple Project Workflow
 ```bash
@@ -1017,6 +1115,16 @@ Prompter supports the following environment variables for additional configurati
   # Set a shorter timeout for smaller projects
   PROMPTER_INIT_TIMEOUT=60 prompter --init
   ```
+
+- `PROMPTER_MAX_ITERATIONS`: Sets the maximum number of task iterations allowed to prevent runaway loops (default: 1000)
+  ```bash
+  # Increase limit for workflows with many task jumps
+  PROMPTER_MAX_ITERATIONS=5000 prompter complex-workflow.toml
+
+  # Decrease limit for stricter loop prevention
+  PROMPTER_MAX_ITERATIONS=100 prompter strict-workflow.toml
+  ```
+  This limit applies even when `allow_infinite_loops = true` is set in the configuration.
 
 ## Examples and Templates
 

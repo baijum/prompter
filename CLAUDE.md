@@ -220,3 +220,9 @@ This is especially powerful when combined with `resume_previous_session` for mul
   export PROMPTER_INIT_TIMEOUT=300  # 5 minutes
   prompter --init
   ```
+
+- `PROMPTER_MAX_ITERATIONS`: Controls the maximum number of task iterations allowed to prevent runaway loops. Default is 1000 iterations. This limit applies even when `allow_infinite_loops = true` is set:
+  ```bash
+  export PROMPTER_MAX_ITERATIONS=5000  # Allow more iterations for complex workflows
+  prompter complex-workflow.toml
+  ```

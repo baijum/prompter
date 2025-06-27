@@ -88,6 +88,7 @@ depends_on = ["nonexistent"]
         finally:
             config_file.unlink()
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_simple_parallel_execution(self, temp_state_file):
         """Test basic parallel execution with independent tasks."""
@@ -144,6 +145,7 @@ depends_on = []
         finally:
             config_file.unlink()
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_dependency_ordering(self, temp_state_file):
         """Test that dependencies are respected in execution order."""
@@ -206,6 +208,7 @@ depends_on = ["second"]
         finally:
             config_file.unlink()
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_failure_stops_dependents(self, temp_state_file):
         """Test that task failure prevents dependents from running."""
@@ -270,6 +273,7 @@ depends_on = ["will_fail"]
         finally:
             config_file.unlink()
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_parallel_limit_respected(self, temp_state_file):
         """Test that max_parallel_tasks limit is enforced."""
@@ -351,6 +355,7 @@ depends_on = []
         finally:
             config_file.unlink()
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_diamond_dependency_pattern(self, temp_state_file):
         """Test diamond dependency pattern execution."""

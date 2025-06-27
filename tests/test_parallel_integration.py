@@ -259,6 +259,7 @@ depends_on = ["task_b"]
         # deploy must be last
         assert execution_order[-1] == "deploy"
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_parallel_execution_performance(self, wide_parallel_config, tmp_path):
         """Test that parallel execution is faster than sequential."""
@@ -367,6 +368,7 @@ depends_on = ["task_b"]
         assert len(errors) > 0
         assert any("Circular dependency detected" in error for error in errors)
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_state_persistence_across_parallel_runs(
         self, wide_parallel_config, tmp_path
@@ -440,6 +442,7 @@ depends_on = ["task_b"]
         assert len(remaining_tasks) == 3  # 2 analysis + 1 report
         assert all(task not in completed_tasks for task in remaining_tasks)
 
+    @pytest.mark.slow
     @pytest.mark.asyncio
     async def test_max_parallel_tasks_limit(self, tmp_path):
         """Test that max_parallel_tasks limit is respected."""

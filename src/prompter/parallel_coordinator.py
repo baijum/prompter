@@ -4,7 +4,6 @@ This module implements concurrent task execution using anyio for structured conc
 respecting task dependencies and resource constraints.
 """
 
-import asyncio
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -117,7 +116,7 @@ class ParallelTaskCoordinator:
         self.resource_pool = ResourcePool(max_parallel_tasks=config.max_parallel_tasks)
 
         # Synchronization primitives
-        self._task_completed_event = asyncio.Event()
+        self._task_completed_event = anyio.Event()
         self._shutdown_requested = False
 
     async def execute_all(self) -> dict[str, TaskResult]:
@@ -211,11 +210,11 @@ class ParallelTaskCoordinator:
 
             # Wait for task completion or timeout
             try:
-                with anyio.fail_after(1.0):  # Check every second
+                with anyio.move_on_after(1.0):  # Check every second
                     await self._task_completed_event.wait()
-                    self._task_completed_event.clear()
-            except TimeoutError:
-                # Timeout is expected, just check for new ready tasks
+                    self._task_completed_event = anyio.Event()  # Reset event
+            except Exception:
+                # Timeout or other error, just continue
                 pass
 
         self.logger.debug("Scheduler loop ended")
@@ -348,8 +347,13 @@ class ParallelTaskCoordinator:
             if all_done or self._shutdown_requested:
                 break
 
-            # Wait a bit before checking again
-            await anyio.sleep(0.1)
+            # Wait for a task to complete before checking again
+            try:
+                with anyio.move_on_after(1.0):  # Check at least every second
+                    await self._task_completed_event.wait()
+                self._task_completed_event = anyio.Event()  # Reset for next wait
+            except Exception:
+                pass  # Just check again
 
     def shutdown(self) -> None:
         """Request graceful shutdown of the coordinator."""

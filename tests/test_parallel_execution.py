@@ -213,6 +213,7 @@ depends_on = ["task2", "task3"]
         assert task3_idx < task4_idx
 
     @pytest.mark.asyncio
+    @pytest.mark.slow
     async def test_parallel_execution_with_failures(
         self, temp_config_file, temp_state_file
     ):

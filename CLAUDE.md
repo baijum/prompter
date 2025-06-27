@@ -130,6 +130,8 @@ mypy src/
 
 **MANDATORY**: When making changes that affect the version number, ensure the version is synchronized between `pyproject.toml` and `src/prompter/__init__.py`. Both files must have the exact same version string. The version is typically updated during the release process, but if you need to fix a version mismatch, update both locations to match the version in `pyproject.toml`.
 
+**MANDATORY**: Always use the `gh` command when accessing GitHub issues, pull requests, or any GitHub-related information. Never guess or assume issue content - always fetch the actual data using commands like `gh issue view`, `gh pr view`, etc.
+
 ## Architecture Notes
 
 The project automates code tidying tasks through Claude Code SDK (Python). Since v0.9.2, we use the Claude Code SDK directly from the Git repository to get immediate access to bug fixes and new features.

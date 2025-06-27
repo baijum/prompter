@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from prompter.config import PrompterConfig
-from prompter.parallel_coordinator import ParallelTaskCoordinator
+from prompter.parallel_coordinator import ParallelTaskCoordinator, TaskStatus
 from prompter.runner import TaskResult, TaskRunner
 from prompter.state import StateManager
 from prompter.task_graph import CycleDetectedError, TaskGraph
@@ -252,9 +252,9 @@ depends_on = ["task2", "task3"]
         assert not results["task2"].success
         assert "Task 2 failed" in results["task2"].error
 
-        # task4 should still run even though task2 failed
-        # (depends on the specific failure handling strategy)
-        assert "task4" in results
+        # task4 should be skipped since task2 failed
+        assert "task4" not in results  # Skipped tasks don't get results
+        assert coordinator.task_states["task4"].status == TaskStatus.SKIPPED
 
     def test_resource_pool_constraints(self):
         """Test that resource pool enforces parallel task limits."""

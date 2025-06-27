@@ -57,6 +57,7 @@ class ResourcePool:
     running_tasks: set[str] = field(default_factory=set)
     completed_tasks: set[str] = field(default_factory=set)
     failed_tasks: set[str] = field(default_factory=set)
+    exclusive_task_running: str | None = None
 
     # Future: Track CPU, memory, API rate limits
     available_cpu: float = field(default_factory=lambda: 100.0)
@@ -68,17 +69,25 @@ class ResourcePool:
         if len(self.running_tasks) >= self.max_parallel_tasks:
             return False
 
-        # Check if task requires exclusive execution
+        # If an exclusive task is running, nothing else can be scheduled
+        if self.exclusive_task_running:
+            return False
+
+        # If this is an exclusive task, it can only run if nothing else is running
         return not (task.exclusive and len(self.running_tasks) > 0)
 
     def allocate(self, task: TaskConfig) -> None:
         """Allocate resources for a task."""
         self.running_tasks.add(task.name)
+        if task.exclusive:
+            self.exclusive_task_running = task.name
         # Future: Deduct CPU and memory
 
     def release(self, task: TaskConfig, success: bool) -> None:
         """Release resources after task completion."""
         self.running_tasks.discard(task.name)
+        if task.name == self.exclusive_task_running:
+            self.exclusive_task_running = None
         if success:
             self.completed_tasks.add(task.name)
         else:
@@ -208,14 +217,8 @@ class ParallelTaskCoordinator:
                     f"Completed: {len(self.resource_pool.completed_tasks)}"
                 )
 
-            # Wait for task completion or timeout
-            try:
-                with anyio.move_on_after(1.0):  # Check every second
-                    await self._task_completed_event.wait()
-                    self._task_completed_event = anyio.Event()  # Reset event
-            except Exception:
-                # Timeout or other error, just continue
-                pass
+            # Wait a bit before checking for new ready tasks
+            await anyio.sleep(0.1)
 
         self.logger.debug("Scheduler loop ended")
 
@@ -317,20 +320,41 @@ class ParallelTaskCoordinator:
             if state.status == TaskStatus.PENDING:
                 # Check if all dependencies are completed
                 task = self.config.get_task_by_name(name)
-                if task and all(
-                    self.task_states.get(dep, TaskExecutionState(dep)).status
-                    == TaskStatus.COMPLETED
-                    for dep in task.depends_on
-                ):
-                    ready.append(name)
-                    state.status = TaskStatus.READY
-                    state.dependencies_met = True
+                if task:
+                    # Check dependency status
+                    dep_states = [
+                        self.task_states.get(dep, TaskExecutionState(dep)).status
+                        for dep in task.depends_on
+                    ]
 
-                    # Update progress display
-                    if self.progress_display:
-                        self.progress_display.update_task(
-                            name, TaskStatus.READY, message="Ready to run"
+                    # If any dependency failed, skip this task
+                    if any(status == TaskStatus.FAILED for status in dep_states):
+                        state.status = TaskStatus.SKIPPED
+                        state.end_time = time.time()
+                        self.logger.info(
+                            f"Skipping task {name} due to failed dependencies"
                         )
+
+                        # Update progress display
+                        if self.progress_display:
+                            self.progress_display.update_task(
+                                name,
+                                TaskStatus.SKIPPED,
+                                message="Skipped (dependency failed)",
+                            )
+                        continue
+
+                    # If all dependencies completed successfully, mark as ready
+                    if all(status == TaskStatus.COMPLETED for status in dep_states):
+                        ready.append(name)
+                        state.status = TaskStatus.READY
+                        state.dependencies_met = True
+
+                        # Update progress display
+                        if self.progress_display:
+                            self.progress_display.update_task(
+                                name, TaskStatus.READY, message="Ready to run"
+                            )
 
         return ready
 
@@ -347,13 +371,8 @@ class ParallelTaskCoordinator:
             if all_done or self._shutdown_requested:
                 break
 
-            # Wait for a task to complete before checking again
-            try:
-                with anyio.move_on_after(1.0):  # Check at least every second
-                    await self._task_completed_event.wait()
-                self._task_completed_event = anyio.Event()  # Reset for next wait
-            except Exception:
-                pass  # Just check again
+            # Wait a bit before checking again
+            await anyio.sleep(0.1)
 
     def shutdown(self) -> None:
         """Request graceful shutdown of the coordinator."""

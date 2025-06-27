@@ -18,7 +18,11 @@ A Python tool for orchestrating AI-powered code maintenance workflows using Clau
 ## Requirements
 
 - Python 3.11 or higher
+- Node.js
+- Claude Code CLI: `npm install -g @anthropic-ai/claude-code`
 - Claude Code SDK (automatically installed from Git repository)
+
+You also need [Anthropic API key](https://docs.anthropic.com/en/docs/claude-code/sdk).
 
 ## Installation
 
@@ -27,10 +31,6 @@ A Python tool for orchestrating AI-powered code maintenance workflows using Clau
 Install directly from GitHub:
 
 ```bash
-# Install the latest release
-pip install git+https://github.com/baijum/prompter.git@v0.10.0
-
-# Or install the latest development version
 pip install git+https://github.com/baijum/prompter.git@main
 ```
 

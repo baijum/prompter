@@ -1,5 +1,9 @@
 name: Publish to PyPI
 
+# NOTE: PyPI publishing is disabled for versions after v0.9.1
+# Users should install from GitHub instead:
+# pip install git+https://github.com/baijum/prompter.git
+
 on:
   release:
     types: [published]
@@ -87,6 +91,8 @@ jobs:
     environment: pypi
     permissions:
       id-token: write  # Required for trusted publishing
+    # PyPI publishing is disabled - install from GitHub instead
+    if: false  # Disabled: PyPI publishing not available after v0.9.1
 
     steps:
     - name: Download build artifacts

@@ -2,16 +2,17 @@
 
 This document outlines the release process for the claude-code-prompter project.
 
+> **⚠️ Important Note**: PyPI publishing is disabled for versions after v0.9.1 due to the Git-based Claude Code SDK dependency. Users should install from GitHub instead.
+
 ## Prerequisites
 
 Before creating a release, ensure you have:
 
 1. **Push access** to the main repository
-2. **PyPI account** with maintainer access to `claude-code-prompter`
-3. **GitHub CLI** (`gh`) installed and authenticated
-4. **Python build tools** installed:
+2. **GitHub CLI** (`gh`) installed and authenticated
+3. **Python build tools** installed:
    ```bash
-   pip install build twine
+   pip install build
    ```
 
 ## Versioning
@@ -121,13 +122,14 @@ Brief overview of the release...
 ## 📦 Installation
 
 \`\`\`bash
-pip install claude-code-prompter==0.x.x
+# Install from GitHub
+pip install git+https://github.com/baijum/prompter.git@v0.x.x
 \`\`\`
 
 ## 🔗 Links
 
 - [Full Changelog](https://github.com/baijum/prompter/compare/v0.x.x-1...v0.x.x)
-- [PyPI Package](https://pypi.org/project/claude-code-prompter/0.x.x/)
+- [GitHub Release](https://github.com/baijum/prompter/releases/tag/v0.x.x)
 EOF
 )"
 ```
@@ -140,7 +142,9 @@ EOF
 git push origin main
 ```
 
-### 5. Publish to PyPI
+### 5. Build Distribution (Optional)
+
+> **Note**: PyPI publishing is disabled. This step is only needed if you want to create distribution files for manual installation.
 
 #### 5.1 Clean Previous Builds
 ```bash
@@ -156,21 +160,14 @@ This creates:
 - `dist/claude_code_prompter-0.x.x-py3-none-any.whl`
 - `dist/claude_code_prompter-0.x.x.tar.gz`
 
-#### 5.3 Upload to PyPI
-```bash
-# For test release (optional)
-python -m twine upload --repository testpypi dist/*
-
-# For production release
-python -m twine upload dist/*
-```
+These files can be attached to the GitHub release for users who want to install manually.
 
 ### 6. Post-Release Verification
 
-#### 6.1 Verify PyPI Package
+#### 6.1 Verify GitHub Installation
 ```bash
 # In a fresh virtual environment
-pip install claude-code-prompter==0.x.x
+pip install git+https://github.com/baijum/prompter.git@v0.x.x
 prompter --version
 ```
 
@@ -205,14 +202,13 @@ Copy this checklist for each release:
 - [ ] Commits pushed to main branch
 
 ### Publishing
-- [ ] Distribution built (`python -m build`)
-- [ ] Package uploaded to PyPI (`python -m twine upload dist/*`)
-- [ ] Installation verified in clean environment
+- [ ] Distribution built (`python -m build`) - Optional
+- [ ] Distribution files attached to GitHub release - Optional
+- [ ] Installation from GitHub verified in clean environment
 
 ### Post-release
-- [ ] PyPI page shows new version
 - [ ] GitHub release page is properly formatted
-- [ ] Installation works: `pip install claude-code-prompter==0.x.x`
+- [ ] Installation works: `pip install git+https://github.com/baijum/prompter.git@v0.x.x`
 - [ ] Announce release (if applicable)
 ```
 
@@ -224,10 +220,10 @@ Copy this checklist for each release:
 - Address type errors shown by mypy
 - Ensure all new code has tests
 
-### 2. PyPI Upload Errors
-- Ensure you're authenticated: `python -m twine upload --username __token__`
-- Check for existing version (can't overwrite)
-- Verify package metadata in pyproject.toml
+### 2. GitHub Installation Errors
+- Ensure the tag exists: `git tag -l v0.x.x`
+- Check network connectivity
+- Verify Git is installed on the system
 
 ### 3. GitHub Release Issues
 - Ensure `gh` is authenticated: `gh auth status`
@@ -256,7 +252,7 @@ If a critical issue is found after release:
    git tag -d v0.x.x
    git push origin :refs/tags/v0.x.x
 
-   # Note: Cannot delete from PyPI - must create new version
+   # Fix the issue and create a new release
    ```
 
 ## Automation Opportunities
@@ -265,7 +261,7 @@ Consider automating these steps in the future:
 - Version bumping based on commit messages
 - CHANGELOG generation from commit history
 - Automated testing on release tags
-- PyPI publishing via GitHub Actions
+- GitHub release creation via Actions
 
 ## Questions?
 

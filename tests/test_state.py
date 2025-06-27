@@ -218,8 +218,9 @@ class TestStateManager:
         assert manager.task_states == {}
         assert manager.results_history == []
 
+    @patch("pathlib.Path.replace")
     @patch("builtins.open", new_callable=mock_open)
-    def test_save_state(self, mock_file, temp_dir):
+    def test_save_state(self, mock_file, mock_replace, temp_dir):
         """Test saving state to file."""
         state_file = temp_dir / "save_test.json"
         manager = StateManager(state_file)
@@ -229,8 +230,13 @@ class TestStateManager:
 
         manager.save_state()
 
-        # Verify file was written
-        mock_file.assert_called_with(state_file, "w")
+        # Verify temp file was written
+        temp_file = state_file.with_suffix(".tmp")
+        mock_file.assert_called_with(temp_file, "w")
+
+        # Verify replace was called
+        mock_replace.assert_called_once()
+
         # Get the written data from the write call
         write_calls = mock_file.return_value.__enter__.return_value.write.call_args_list
         written_data = "".join(call[0][0] for call in write_calls)

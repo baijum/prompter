@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2025-06-27
+
+### 🚀 New Features
+
+- **Enhanced Test Infrastructure and Stability**
+  - Added pytest markers for test categorization (`unit` and `integration`)
+  - Improved parallel test execution with proper async handling
+  - Fixed test hanging issues in parallel execution scenarios
+  - Enhanced atomic file write testing to handle filesystem specifics
+  - Resolved async test issues with better exception handling
+
+### 🐛 Bug Fixes
+
+- **Test Suite Stability Improvements**
+  - Fixed hanging tests in parallel task limit scenarios
+  - Resolved test_save_state to properly handle atomic file writes
+  - Fixed async test issues in parallel execution tests
+  - Improved test reliability across different environments
+
+### 📚 Documentation
+
+- **Development Guidelines**
+  - Added mandatory rule for using `gh` command for GitHub access
+  - Enhanced CLAUDE.md with strict guidelines for GitHub interaction
+  - Updated documentation to reflect test infrastructure improvements
+
+### 🧪 Testing
+
+- **Test Infrastructure Enhancements**
+  - Added markers to categorize tests (unit vs integration)
+  - Improved test execution speed and reliability
+  - Better handling of async operations in tests
+  - Enhanced parallel test execution stability
+
 ## [0.9.2] - 2025-06-27
 
 ### 🐛 Bug Fixes

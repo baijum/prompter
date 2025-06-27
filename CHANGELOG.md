@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.2] - 2025-06-27
+
+### 🐛 Bug Fixes
+
+- **Updated claude-code-sdk dependency**
+  - Switched from PyPI package to Git repository source
+  - Now using the main branch from baijum/claude-code-sdk-python repository
+  - This change allows using the latest SDK updates and bug fixes immediately
+
 ## [0.9.1] - 2025-06-27
 
 ### 🐛 Bug Fixes

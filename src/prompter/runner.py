@@ -1,6 +1,6 @@
 """Task runner for executing prompts with Claude Code."""
 
-import asyncio
+import anyio
 import shlex
 import subprocess
 import time
@@ -278,6 +278,24 @@ class TaskRunner:
         self, task: TaskConfig, resume_session_id: str | None = None
     ) -> tuple[bool, str, str | None]:
         """Execute a Claude Code prompt using SDK with JSON error handling."""
+        try:
+            self.logger.debug("Creating anyio event loop for Claude SDK execution")
+            # Run the async query with retry logic in a synchronous context
+            result = anyio.run(
+                self._execute_claude_prompt_with_retry, task, resume_session_id
+            )
+            self.logger.debug(
+                f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
+            )
+            return result
+        except Exception as e:
+            self.logger.exception("Error executing Claude SDK task")
+            return False, f"Error executing Claude SDK task: {e}", None
+
+    async def _execute_claude_prompt_with_retry(
+        self, task: TaskConfig, resume_session_id: str | None = None
+    ) -> tuple[bool, str, str | None]:
+        """Execute Claude Code prompt with structured retry logic."""
         json_retry_count = 0
         max_json_retries = 3
 
@@ -288,24 +306,11 @@ class TaskRunner:
                         f"Retrying after JSON error (attempt {json_retry_count + 1}/{max_json_retries}), "
                         f"waiting {json_retry_count * 2}s..."
                     )
-                    time.sleep(json_retry_count * 2)
+                    # Use anyio.sleep for proper async delay
+                    await anyio.sleep(json_retry_count * 2)
 
-                    # Force cleanup before retry
-                    import gc
-
-                    gc.collect()
-
-                self.logger.debug(
-                    "Creating asyncio event loop for Claude SDK execution"
-                )
-                # Run the async query in a synchronous context
-                result = asyncio.run(
-                    self._execute_claude_prompt_async(task, resume_session_id)
-                )
-                self.logger.debug(
-                    f"Claude SDK execution completed, result length: {len(result[1]) if result[0] else 0}"
-                )
-                return result
+                # Execute the actual prompt
+                return await self._execute_claude_prompt_async(task, resume_session_id)
 
             except TimeoutError:
                 self.logger.exception(
@@ -333,8 +338,8 @@ class TaskRunner:
                         f"JSON error persists after {max_json_retries} retries:\n{error_details}"
                     )
 
-                self.logger.exception("Error executing Claude SDK task")
-                return False, f"Error executing Claude SDK task: {e}", None
+                # For non-JSON errors, fail immediately
+                raise
 
         return False, f"Failed after {max_json_retries} JSON retry attempts", None
 
@@ -366,7 +371,8 @@ class TaskRunner:
         try:
             # Execute with timeout if specified
             if task.timeout:
-                messages = await asyncio.wait_for(run_query(), timeout=task.timeout)
+                with anyio.fail_after(task.timeout):
+                    messages = await run_query()
             else:
                 messages = await run_query()
 
@@ -390,7 +396,7 @@ class TaskRunner:
                 return True, output_text.strip(), session_id
             return False, "Claude SDK returned empty response", session_id
 
-        except TimeoutError:
+        except anyio.get_cancelled_exc_class():
             raise TimeoutError(f"Task timed out after {task.timeout} seconds")
         except Exception:
             raise

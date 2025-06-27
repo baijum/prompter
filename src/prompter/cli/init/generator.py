@@ -1,6 +1,6 @@
 """Main configuration generator orchestration."""
 
-import asyncio
+import anyio
 import importlib.util
 import os
 import sys
@@ -114,8 +114,8 @@ class ConfigGenerator:
         )
 
         try:
-            # Use asyncio.run() which properly sets up the event loop
-            analysis = asyncio.run(analyzer.analyze_with_timeout(timeout=timeout))
+            # Use anyio.run() which properly sets up the event loop
+            analysis = anyio.run(analyzer.analyze_with_timeout, timeout)
         except TimeoutError as e:
             msg = f"Analysis timed out after {timeout} seconds. Please try again.\nYou can increase the timeout by setting PROMPTER_INIT_TIMEOUT environment variable."
             raise TimeoutError(msg) from e

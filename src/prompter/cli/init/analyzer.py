@@ -1,6 +1,6 @@
 """AI-powered project analysis using Claude Code SDK."""
 
-import asyncio
+import anyio
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -39,7 +39,8 @@ class ProjectAnalyzer:
     async def analyze_with_timeout(self, timeout: int = 30) -> AnalysisResult:
         """Analyze project with timeout."""
         try:
-            return await asyncio.wait_for(self.analyze(), timeout=timeout)
+            with anyio.fail_after(timeout):
+                return await self.analyze()
         except TimeoutError:
             raise TimeoutError(f"Analysis timed out after {timeout} seconds")
         except Exception as e:

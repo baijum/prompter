@@ -1,6 +1,6 @@
 """Tests for the AI project analyzer."""
 
-import asyncio
+import anyio
 import json
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -79,7 +79,7 @@ class TestProjectAnalyzer:
 
         # Mock analyze to take too long
         async def slow_analyze():
-            await asyncio.sleep(2)
+            await anyio.sleep(2)
             return AnalysisResult()
 
         with patch.object(analyzer, "analyze", side_effect=slow_analyze):

@@ -1,6 +1,5 @@
 """Tests for the task runner module."""
 
-import asyncio
 import subprocess
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -440,9 +439,9 @@ class TestTaskRunner:
         assert result.success is True
 
     @patch("prompter.runner.query")
-    @patch("prompter.runner.asyncio.wait_for")
-    def test_sdk_timeout_with_asyncio(self, mock_wait_for, mock_query, mock_config):
-        """Test task execution with asyncio timeout."""
+    @patch("prompter.runner.anyio.fail_after")
+    def test_sdk_timeout_with_anyio(self, mock_fail_after, mock_query, mock_config):
+        """Test task execution with anyio timeout."""
         task = TaskConfig(
             {
                 "name": "timeout_task",
@@ -453,15 +452,18 @@ class TestTaskRunner:
             }
         )
 
-        # Mock asyncio.wait_for to raise TimeoutError
-        mock_wait_for.side_effect = TimeoutError()
+        # Mock anyio.fail_after to create a context manager that raises TimeoutError on enter
+        mock_context_manager = Mock()
+        mock_context_manager.__enter__ = Mock(side_effect=TimeoutError())
+        mock_context_manager.__exit__ = Mock()
+        mock_fail_after.return_value = mock_context_manager
 
         runner = TaskRunner(mock_config)
         result = runner.run_task(task)
 
         assert result.success is False
         assert "timed out after 5 seconds" in result.error
-        mock_wait_for.assert_called_once()
+        mock_fail_after.assert_called_once_with(5)
 
     @patch("prompter.runner.query")
     def test_sdk_no_timeout_specified(self, mock_query, mock_config):
@@ -493,16 +495,14 @@ class TestTaskRunner:
 
             runner = TaskRunner(mock_config)
 
-            # Spy on asyncio.wait_for to ensure it's not called when no timeout
-            with patch(
-                "prompter.runner.asyncio.wait_for", wraps=asyncio.wait_for
-            ) as mock_wait_for:
+            # Spy on anyio.fail_after to ensure it's not called when no timeout
+            with patch("prompter.runner.anyio.fail_after") as mock_fail_after:
                 result = runner.run_task(task)
 
                 assert result.success is True
                 assert task.timeout is None
-                # wait_for should not be called when no timeout is specified
-                mock_wait_for.assert_not_called()
+                # fail_after should not be called when no timeout is specified
+                mock_fail_after.assert_not_called()
 
     @patch("prompter.runner.query")
     def test_sdk_with_timeout_success(self, mock_query, mock_config):
@@ -560,9 +560,13 @@ class TestTaskRunner:
 
         runner = TaskRunner(mock_config)
 
-        # Mock asyncio.wait_for to always timeout for this test
-        with patch("prompter.runner.asyncio.wait_for") as mock_wait_for:
-            mock_wait_for.side_effect = TimeoutError()
+        # Mock anyio.fail_after to always timeout for this test
+        with patch("prompter.runner.anyio.fail_after") as mock_fail_after:
+            # Mock anyio.fail_after context manager behavior
+            mock_context_manager = Mock()
+            mock_context_manager.__enter__ = Mock(side_effect=TimeoutError())
+            mock_context_manager.__exit__ = Mock()
+            mock_fail_after.return_value = mock_context_manager
 
             result = runner.run_task(task)
 

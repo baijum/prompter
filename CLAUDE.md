@@ -21,6 +21,10 @@ This project requires Python 3.11 or higher.
    pip install -e ".[dev]"
    ```
 
+**Note**: The Claude Code SDK dependency is installed from the Git repository (baijum/claude-code-sdk-python) rather than PyPI to ensure access to the latest updates and bug fixes.
+
+**Dependencies**: The project uses `anyio` (>=4.0.0) for async operations, providing cross-platform compatibility with different async backends.
+
 ## Common Development Tasks
 
 ### Installation and Setup
@@ -128,7 +132,9 @@ mypy src/
 
 ## Architecture Notes
 
-The project automates code tidying tasks through Claude Code SDK (Python):
+The project automates code tidying tasks through Claude Code SDK (Python). Since v0.9.2, we use the Claude Code SDK directly from the Git repository to get immediate access to bug fixes and new features.
+
+As of the latest version, the project uses `anyio` for cross-platform async support, providing better structured concurrency and compatibility with different async backends.
 
 ### Core Components
 - **Configuration Parser** (`src/prompter/config.py`): Handles TOML configuration parsing and validation

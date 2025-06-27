@@ -19,7 +19,7 @@ A Python tool for orchestrating AI-powered code maintenance workflows using Clau
 ## Requirements
 
 - Python 3.11 or higher
-- Claude Code SDK
+- Claude Code SDK (automatically installed from Git repository)
 
 ## Installation
 
@@ -28,6 +28,8 @@ Install from PyPI:
 ```bash
 pip install claude-code-prompter
 ```
+
+> **Note**: Starting from v0.9.2, the Claude Code SDK dependency is automatically installed from the latest Git repository source instead of PyPI. This ensures you always get the most recent SDK updates and bug fixes.
 
 Or install from source:
 

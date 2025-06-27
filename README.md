@@ -73,6 +73,8 @@ name = "build"
 on_success = "stop"  # End execution
 ```
 
+> **Note**: Progress visualization (progress bars) is only available for parallel execution when tasks have dependencies. Sequential execution shows simple status messages without progress bars. To enable progress visualization, define task dependencies using the `depends_on` field (see Parallel Task Execution section).
+
 ### 2. Conditional Workflows (Task Jumping)
 Tasks can jump to specific named tasks, enabling complex branching logic. Perfect for error handling, conditional deployments, and dynamic workflows.
 
@@ -240,6 +242,8 @@ verify_command = "test -f /mnt/shared/deploy/app.jar"
 ### 4. Parallel Task Execution (New in v0.10.0)
 
 Prompter now supports parallel execution of independent tasks, dramatically reducing workflow execution time for complex projects. Tasks with dependencies are executed in the correct order while independent tasks run concurrently.
+
+> **Note**: This is the only mode that displays progress bars. Without task dependencies, Prompter uses sequential execution which shows simple status messages instead of progress visualization.
 
 #### Basic Parallel Configuration
 
@@ -428,6 +432,13 @@ prompter config.toml --show-graph  # Coming soon
 ### 5. Progress Visualization (New in v0.10.0)
 
 Prompter provides real-time progress visualization for parallel task execution, automatically adapting to your terminal capabilities.
+
+> **Important**: Progress visualization is only available when:
+> - Tasks have dependencies defined using the `depends_on` field
+> - Parallel execution is enabled (default when dependencies exist)
+> - You're not running a single task with `--task`
+>
+> Sequential execution (tasks without dependencies) displays simple status messages without progress bars.
 
 #### Display Modes
 

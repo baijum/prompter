@@ -317,6 +317,12 @@ class ParallelTaskCoordinator:
         ready = []
 
         for name, state in self.task_states.items():
+            # If already marked as ready, include it
+            if state.status == TaskStatus.READY:
+                ready.append(name)
+                continue
+
+            # Check pending tasks for readiness
             if state.status == TaskStatus.PENDING:
                 # Check if all dependencies are completed
                 task = self.config.get_task_by_name(name)

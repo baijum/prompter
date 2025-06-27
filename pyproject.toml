@@ -121,7 +121,10 @@ addopts = [
     "--verbose",
 ]
 markers = [
+    "unit: marks tests as unit tests",
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow running tests",
+    "asyncio: marks tests as async test cases",
 ]
 
 [tool.coverage.run]

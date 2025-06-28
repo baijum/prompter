@@ -239,7 +239,7 @@ verify_command = "test -f /mnt/shared/deploy/app.jar"
 - Keep delays as short as possible - just enough for the operation to complete
 - Consider using shorter intervals (5-30 seconds) rather than the default
 
-### 4. Parallel Task Execution (New in v0.10.0)
+### 4. Parallel Task Execution
 
 Prompter now supports parallel execution of independent tasks, dramatically reducing workflow execution time for complex projects. Tasks with dependencies are executed in the correct order while independent tasks run concurrently.
 
@@ -429,7 +429,7 @@ prompter config.toml --show-graph  # Coming soon
 
 > ⚠️ **Important**: Tasks that modify the same files should not run in parallel. Use `depends_on` to ensure proper ordering when tasks share resources.
 
-### 5. Progress Visualization (New in v0.10.0)
+### 5. Progress Visualization
 
 Prompter provides real-time progress visualization for parallel task execution, automatically adapting to your terminal capabilities.
 
@@ -493,7 +493,7 @@ The progress display automatically adapts to your environment:
 
 > 💡 **Pro Tip**: The progress visualization is especially helpful for understanding complex dependency graphs and identifying bottlenecks in parallel execution.
 
-## AI-Powered Project Analysis (New in v0.7.0)
+## AI-Powered Project Analysis
 
 Prompter can now analyze your project using Claude and automatically generate a customized configuration file tailored to your specific codebase.
 
@@ -587,7 +587,7 @@ prompter --clear-state
 # Enable verbose output for debugging
 prompter config.toml --verbose
 
-# Enable extensive diagnostic logging (new in v0.3.0)
+# Enable extensive diagnostic logging
 prompter config.toml --debug
 
 # Save logs to a file
@@ -596,7 +596,7 @@ prompter config.toml --log-file debug.log
 # Combine debug mode with log file for comprehensive diagnostics
 prompter config.toml --debug --log-file debug.log
 
-# Progress display options (new in v0.10.0)
+# Progress display options
 prompter config.toml --simple-progress    # Use simple progress for CI/CD
 prompter config.toml --no-progress        # Disable progress display
 ```
